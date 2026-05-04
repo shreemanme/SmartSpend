@@ -1,0 +1,15 @@
+# SmartSpend — .gitignore
+
+# Database credentials — never commit
+config/db.php
+
+# macOS system files
+.DS_Store
+**/.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
