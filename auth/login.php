@@ -48,7 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['flash'] = ['type' => 'success', 'msg' => "Welcome back, {$first_name}!"];
             }
 
-            header('Location: /smartspend/dashboard/index.php');
+            // Admins go straight to the Admin Dashboard
+            if ($user['role'] === 'admin') {
+                header('Location: /smartspend/admin/dashboard.php');
+            } else {
+                header('Location: /smartspend/dashboard/index.php');
+            }
             exit;
         }
     }
