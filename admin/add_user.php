@@ -2,7 +2,7 @@
 /**
  * Page:      admin/add_user.php
  * Component: Admin Panel — Add User
- * Developer: Shreeman Bhandari
+ * Developer: Nandan kumar yadav
  */
 
 session_start();
