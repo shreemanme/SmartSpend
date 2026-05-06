@@ -19,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../config/db.php';
 
-$uid = (int)$_SESSION['user_id'];
-$id  = (int)($_POST['expense_id'] ?? 0);
+$uid = (int) $_SESSION['user_id'];
+$id = (int) ($_POST['expense_id'] ?? 0);
 
 if ($id === 0) {
     $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Invalid expense.'];

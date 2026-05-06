@@ -10,6 +10,6 @@ session_start();
 if (isset($_SESSION['user_id'])) {
     header('Location: /smartspend/dashboard/index.php');
 } else {
-    header('Location: /smartspend/auth/login.php');
+    header('Location: /smartspend/home.php');
 }
 exit;
