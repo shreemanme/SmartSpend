@@ -2,7 +2,7 @@
 /**
  * Page:      account/index.php
  * Component: Account Management — View & Edit
- * Developer: Nandan Kumar Yadav
+ * Developer: Nandan Kumar Yadav (User & Account Management)
  */
 
 session_start();

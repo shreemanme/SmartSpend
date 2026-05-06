@@ -2,7 +2,7 @@
 /**
  * Page:      admin/expenses.php
  * Component: Admin Panel — Expense Overview (Read-only)
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 session_start();

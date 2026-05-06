@@ -2,7 +2,7 @@
 /**
  * Page:      expenses/add.php
  * Component: Expense Entry Management — Add Expense
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 session_start();

@@ -2,7 +2,7 @@
 /**
  * Page:      config/db.php
  * Component: Database Configuration
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 $host = 'localhost';

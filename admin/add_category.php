@@ -2,7 +2,7 @@
 /**
  * Page:      admin/add_category.php
  * Component: Admin Panel — Add Category
- * Developer: Ratnesh Kumar Yadav
+ * Developer: Ratnesh Kumar Yadav (Category Management)
  */
 
 session_start();

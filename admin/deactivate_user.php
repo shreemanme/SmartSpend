@@ -2,7 +2,7 @@
 /**
  * Page:      admin/deactivate_user.php
  * Component: Admin Panel — Deactivate User
- * Developer: Nandan Kumar Yadav
+ * Developer: Nandan Kumar Yadav (User & Account Management)
  */
 
 session_start();

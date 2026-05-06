@@ -2,7 +2,7 @@
 /**
  * Page:      index.php
  * Component: Entry Point — Redirect
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 session_start();

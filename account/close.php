@@ -2,7 +2,7 @@
 /**
  * Page:      account/close.php
  * Component: Account Management — Close Account
- * Developer: Nandan Kumar Yadav
+ * Developer: Nandan Kumar Yadav (User & Account Management)
  */
 
 session_start();

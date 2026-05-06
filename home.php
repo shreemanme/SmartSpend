@@ -2,7 +2,7 @@
 /**
  * Page:      home.php
  * Component: Public Homepage
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 session_start();

@@ -2,7 +2,7 @@
 /**
  * Page:      admin/dashboard.php
  * Component: Admin Panel — Dashboard
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 session_start();

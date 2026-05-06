@@ -2,7 +2,7 @@
 /**
  * Page:      admin/audit.php
  * Component: Admin Panel — Audit Log Viewer
- * Developer: Bibek Timsena
+ * Developer: Bibek Timsena (Audit & History Log)
  */
 
 session_start();

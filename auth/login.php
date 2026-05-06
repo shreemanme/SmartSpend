@@ -2,7 +2,7 @@
 /**
  * Page:      auth/login.php
  * Component: Authentication — Login
- * Developer: Nandan Kumar Yadav
+ * Developer: Nandan Kumar Yadav (User & Account Management)
  */
 
 session_start();

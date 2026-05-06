@@ -2,7 +2,7 @@
 /**
  * Page:      includes/header.php
  * Component: Shared Header — Nav Bar, Flash Messages
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 // Start session only if not already started

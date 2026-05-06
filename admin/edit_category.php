@@ -2,7 +2,7 @@
 /**
  * Page:      admin/edit_category.php
  * Component: Admin Panel — Edit Category
- * Developer: Ratnesh Kumar Yadav
+ * Developer: Ratnesh Kumar Yadav (Category Management)
  */
 
 session_start();

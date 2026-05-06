@@ -2,7 +2,7 @@
 /**
  * Page:      includes/footer.php
  * Component: Shared Footer
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 ?>
 </main><!-- /.container -->

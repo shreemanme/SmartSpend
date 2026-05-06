@@ -2,7 +2,7 @@
 /**
  * Page:      admin/review_log.php
  * Component: Admin Panel — Mark Audit Entry Reviewed
- * Developer: Bibek Timsena
+ * Developer: Bibek Timsena (Audit & History Log)
  */
 
 session_start();

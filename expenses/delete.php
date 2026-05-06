@@ -2,7 +2,7 @@
 /**
  * Page:      expenses/delete.php
  * Component: Expense Entry Management — Soft Delete
- * Developer: Shreeman Bhandari
+ * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
  */
 
 session_start();

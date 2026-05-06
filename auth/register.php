@@ -2,7 +2,7 @@
 /**
  * Page:      auth/register.php
  * Component: Authentication — Registration
- * Developer: Nandan Kumar Yadav
+ * Developer: Nandan Kumar Yadav (User & Account Management)
  */
 
 session_start();
