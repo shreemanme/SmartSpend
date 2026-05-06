@@ -2,7 +2,7 @@
 /**
  * Page:      admin/review_log.php
  * Component: Admin Panel — Mark Audit Entry Reviewed
- * Developer: Shreeman Bhandari
+ * Developer: Bibek Timsena
  */
 
 session_start();

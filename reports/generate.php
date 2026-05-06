@@ -2,7 +2,7 @@
 /**
  * Page:      reports/generate.php
  * Component: Reports — Generate Handler
- * Developer: Shreeman Bhandari
+ * Developer: Suraj Rai
  */
 
 session_start();

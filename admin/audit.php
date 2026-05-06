@@ -2,7 +2,7 @@
 /**
  * Page:      admin/audit.php
  * Component: Admin Panel — Audit Log Viewer
- * Developer: Shreeman Bhandari
+ * Developer: Bibek Timsena
  */
 
 session_start();

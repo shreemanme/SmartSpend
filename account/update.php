@@ -2,7 +2,7 @@
 /**
  * Page:      account/update.php
  * Component: Account Management — Update Details
- * Developer: Shreeman Bhandari
+ * Developer: Nandan Kumar Yadav
  */
 
 session_start();

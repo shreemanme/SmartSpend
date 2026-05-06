@@ -2,7 +2,7 @@
 /**
  * Page:      account/password.php
  * Component: Account Management — Change Password
- * Developer: Shreeman Bhandari
+ * Developer: Nandan Kumar Yadav
  */
 
 session_start();

@@ -72,9 +72,7 @@ function nav_active(string $path): string
                 <div class="navbar-right">
                     <span class="navbar-greeting">Hi,
                         <strong><?= htmlspecialchars(explode(' ', $_SESSION['full_name'])[0], ENT_QUOTES, 'UTF-8') ?></strong></span>
-                    <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
-                        <a href="/smartspend/admin/dashboard.php" class="btn-admin-pill">Admin Panel</a>
-                    <?php endif; ?>
+
                     <span class="nav-divider"></span>
                     <a href="/smartspend/auth/logout.php" class="nav-logout">Logout</a>
                 </div>

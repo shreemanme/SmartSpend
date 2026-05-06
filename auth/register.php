@@ -2,7 +2,7 @@
 /**
  * Page:      auth/register.php
  * Component: Authentication — Registration
- * Developer: Shreeman Bhandari
+ * Developer: Nandan Kumar Yadav
  */
 
 session_start();

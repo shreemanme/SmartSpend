@@ -2,7 +2,7 @@
 /**
  * Page:      reports/index.php
  * Component: Reports — Generate & View
- * Developer: Shreeman Bhandari
+ * Developer: Suraj Rai
  */
 
 session_start();

@@ -2,7 +2,7 @@
 /**
  * Page:      admin/toggle_category.php
  * Component: Admin Panel — Toggle Category Active State
- * Developer: Shreeman Bhandari
+ * Developer: Ratnesh Kumar Yadav
  */
 
 session_start();

@@ -2,7 +2,7 @@
 /**
  * Page:      admin/reports.php
  * Component: Admin Panel — Reports Overview (Read-only)
- * Developer: Shreeman Bhandari
+ * Developer: Suraj Rai
  */
 
 session_start();

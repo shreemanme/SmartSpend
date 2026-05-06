@@ -2,7 +2,7 @@
 /**
  * Page:      auth/logout.php
  * Component: Authentication — Logout
- * Developer: Shreeman Bhandari
+ * Developer: Nandan Kumar Yadav
  */
 
 session_start();

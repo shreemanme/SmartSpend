@@ -2,7 +2,7 @@
 /**
  * Page:      admin/edit_user.php
  * Component: Admin Panel — Edit User
- * Developer: Shreeman Bhandari
+ * Developer: Nandan Kumar Yadav
  */
 
 session_start();

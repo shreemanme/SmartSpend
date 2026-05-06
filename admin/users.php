@@ -2,7 +2,7 @@
 /**
  * Page:      admin/users.php
  * Component: Admin Panel — User Management
- * Developer: Shreeman Bhandari
+ * Developer: Nandan Kumar Yadav
  */
 
 session_start();
