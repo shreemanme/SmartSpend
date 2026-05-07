@@ -2,8 +2,6 @@
 
 A straightforward, professional web application for tracking and managing personal expenses. Built entirely with PHP, MySQL, and vanilla CSS — ensuring a clean, lightweight architecture with no external framework dependencies.
 
-![SmartSpend Banner](./assets/img/SmartSpend.svg) <!-- Assuming logo is here, else it's just a fallback -->
-
 ---
 
 ## 🌟 Key Features
