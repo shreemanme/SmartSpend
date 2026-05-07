@@ -1,10 +1,8 @@
-/* ─────────────────────────────────────────────────────────────────────────
-   SmartSpend — assets/css/home.css
+/* SmartSpend: assets/css/home.css
    Public homepage styles (loaded only on home.php)
-   Developer: Shreeman Bhandari
-   ───────────────────────────────────────────────────────────────────────── */
+   Developer: Shreeman Bhandari */
 
-/* ── Home page body overrides ────────────────────────────────────────────── */
+/* Home page body overrides */
 .home-page {
     font-family: 'Inter', Arial, Helvetica, sans-serif;
     background: #FAFBFC;
@@ -12,7 +10,7 @@
     display: block; /* override the flex from style.css */
 }
 
-/* ── Scroll-reveal base state ─────────────────────────────────────────────── */
+/* Scroll-reveal base state */
 .feature-card,
 .step,
 .strip-stat,
@@ -37,7 +35,7 @@
 .feature-card:nth-child(5) { transition-delay: 0.32s; }
 .feature-card:nth-child(6) { transition-delay: 0.40s; }
 
-/* ── Public Navigation ────────────────────────────────────────────────────── */
+/* Public Navigation */
 .home-nav {
     position: sticky;
     top: 0;
@@ -116,11 +114,11 @@
     color: #fff;
 }
 
-/* ── Hero ─────────────────────────────────────────────────────────────────── */
+/* Hero */
 .hero {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #0A1628 0%, #0D2240 55%, #0A2E1A 100%);
+    background: linear-gradient(160deg, #0C1B33 0%, #0F2545 100%);
     min-height: 88vh;
     display: flex;
     align-items: center;
@@ -137,8 +135,8 @@
 .hero-shape {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.35;
+    filter: blur(90px);
+    opacity: 0.18;
 }
 
 .hero-shape-1 {
@@ -155,7 +153,7 @@
     background: #0052CC;
     bottom: -120px;
     left: -80px;
-    opacity: 0.25;
+    opacity: 0.12;
 }
 
 .hero-shape-3 {
@@ -165,7 +163,7 @@
     top: 50%;
     left: 38%;
     transform: translateY(-50%);
-    opacity: 0.15;
+    opacity: 0.08;
 }
 
 .hero-inner {
@@ -288,7 +286,7 @@
     color: rgba(255, 255, 255, 0.45);
 }
 
-/* ── Dashboard preview card ───────────────────────────────────────────────── */
+/* Dashboard preview card */
 .hero-preview {
     position: relative;
     z-index: 1;
@@ -462,7 +460,7 @@
     flex-shrink: 0;
 }
 
-/* ── Stats Strip ──────────────────────────────────────────────────────────── */
+/* Stats Strip */
 .stats-strip {
     background: #fff;
     border-bottom: 1px solid #E8ECF0;
@@ -507,7 +505,7 @@
     background: #E0E6EB;
 }
 
-/* ── Shared Section Helpers ───────────────────────────────────────────────── */
+/* Shared Section Helpers */
 .section-label {
     font-size: 12px;
     font-weight: 700;
@@ -542,7 +540,7 @@
     margin-bottom: 52px;
 }
 
-/* ── Features ─────────────────────────────────────────────────────────────── */
+/* Features */
 .features {
     padding: 96px 28px;
     background: #FAFBFC;
@@ -604,9 +602,9 @@
     line-height: 1.65;
 }
 
-/* ── How It Works ─────────────────────────────────────────────────────────── */
+/* How It Works */
 .how-it-works {
-    background: linear-gradient(135deg, #0A1628 0%, #0D2240 60%, #0A2E1A 100%);
+    background: linear-gradient(160deg, #0C1B33 0%, #0F2545 100%);
     padding: 96px 28px;
     position: relative;
     overflow: hidden;
@@ -685,7 +683,7 @@
     align-self: flex-start;
 }
 
-/* ── CTA Section ──────────────────────────────────────────────────────────── */
+/* CTA Section */
 .cta-section {
     background: #fff;
     padding: 96px 28px;
@@ -759,7 +757,7 @@
     text-decoration: underline;
 }
 
-/* ── Footer ───────────────────────────────────────────────────────────────── */
+/* Footer */
 .home-footer {
     background: #0A1628;
     border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -819,9 +817,7 @@
     color: rgba(255, 255, 255, 0.85);
 }
 
-/* ═══════════════════════════════════════════════════
-   RESPONSIVE — TABLET  (≤ 1024px)
-   ═══════════════════════════════════════════════════ */
+/* Responsive: tablet (max-width 1024px) */
 @media (max-width: 1024px) {
     .hero {
         flex-direction: column;
@@ -864,9 +860,7 @@
     }
 }
 
-/* ═══════════════════════════════════════════════════
-   RESPONSIVE — MOBILE  (≤ 768px)
-   ═══════════════════════════════════════════════════ */
+/* Responsive: mobile (max-width 768px) */
 @media (max-width: 768px) {
     .home-nav-inner {
         padding: 0 18px;
@@ -950,9 +944,7 @@
     }
 }
 
-/* ═══════════════════════════════════════════════════
-   RESPONSIVE — SMALL MOBILE  (≤ 480px)
-   ═══════════════════════════════════════════════════ */
+/* Responsive: small mobile (max-width 480px) */
 @media (max-width: 480px) {
     .hero-heading {
         font-size: 1.95rem;

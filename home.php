@@ -20,8 +20,8 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="SmartSpend — the personal expense tracker that helps you log, categorise, and understand your spending in minutes. Free to use, no card required.">
-    <title>SmartSpend — Personal Expense Tracker</title>
+        content="SmartSpend is a personal expense tracker that helps you log, categorise, and understand your spending in minutes. Free to use, no card required.">
+    <title>SmartSpend: Personal Expense Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@ if (isset($_SESSION['user_id'])) {
 
 <body class="home-page">
 
-    <!-- ── Public Navigation ──────────────────────────────────────────────── -->
+    <!-- Public Navigation -->
     <nav class="home-nav" role="navigation" aria-label="Main navigation">
         <div class="home-nav-inner">
             <a href="/smartspend/home.php" class="home-nav-brand" aria-label="SmartSpend home">
@@ -45,7 +45,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </nav>
 
-    <!-- ── Hero Section ───────────────────────────────────────────────────── -->
+    <!-- Hero Section -->
     <section class="hero" aria-labelledby="hero-heading">
         <div class="hero-bg-shapes" aria-hidden="true">
             <div class="hero-shape hero-shape-1"></div>
@@ -63,7 +63,7 @@ if (isset($_SESSION['user_id'])) {
             </h1>
             <p class="hero-subheading">
                 SmartSpend helps you log every expense, understand where your money goes,
-                and make smarter financial decisions — all from one clean dashboard.
+                and make smarter financial decisions. One clean dashboard.
             </p>
             <div class="hero-actions">
                 <a href="/smartspend/auth/register.php" class="btn-hero-primary" id="hero-cta-register">
@@ -88,7 +88,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="preview-dot preview-dot-red"></div>
                     <div class="preview-dot preview-dot-yellow"></div>
                     <div class="preview-dot preview-dot-green"></div>
-                    <span class="preview-title">Dashboard — May 2026</span>
+                    <span class="preview-title">Dashboard, May 2026</span>
                 </div>
                 <div class="preview-stats">
                     <div class="preview-stat">
@@ -139,24 +139,24 @@ if (isset($_SESSION['user_id'])) {
                     <div class="preview-expense-row">
                         <span class="preview-expense-icon">🛒</span>
                         <span class="preview-expense-name">Weekly groceries</span>
-                        <span class="preview-expense-amount">-£68.40</span>
+                        <span class="preview-expense-amount">£68.40</span>
                     </div>
                     <div class="preview-expense-row">
                         <span class="preview-expense-icon">🚌</span>
                         <span class="preview-expense-name">Monthly bus pass</span>
-                        <span class="preview-expense-amount">-£52.00</span>
+                        <span class="preview-expense-amount">£52.00</span>
                     </div>
                     <div class="preview-expense-row">
                         <span class="preview-expense-icon">☕</span>
                         <span class="preview-expense-name">Coffee &amp; lunch</span>
-                        <span class="preview-expense-amount">-£14.80</span>
+                        <span class="preview-expense-amount">£14.80</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ── Stats Strip ─────────────────────────────────────────────────────── -->
+    <!-- Stats Strip -->
     <section class="stats-strip" aria-label="Platform highlights">
         <div class="stats-strip-inner">
             <div class="strip-stat">
@@ -181,7 +181,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </section>
 
-    <!-- ── Features Section ───────────────────────────────────────────────── -->
+    <!-- Features Section -->
     <section class="features" id="features" aria-labelledby="features-heading">
         <div class="features-inner">
             <div class="section-label">What you get</div>
@@ -189,7 +189,7 @@ if (isset($_SESSION['user_id'])) {
                 Everything you need to track spending
             </h2>
             <p class="section-subheading">
-                Built without bloat — SmartSpend gives you exactly the tools you need,
+                Built without bloat. SmartSpend gives you exactly the tools you need,
                 nothing more, nothing less.
             </p>
 
@@ -217,7 +217,7 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </div>
                     <h3>Live Dashboard</h3>
-                    <p>See your month-to-date total, highest spending category, and recent transactions the moment you log in — no setup required.</p>
+                    <p>See your month-to-date total, highest spending category, and recent transactions the moment you log in. No setup required.</p>
                 </div>
 
                 <div class="feature-card" id="feature-reports">
@@ -244,7 +244,7 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </div>
                     <h3>Secure Accounts</h3>
-                    <p>Register in seconds. Passwords are hashed with bcrypt and all database queries use PDO prepared statements — security by default.</p>
+                    <p>Register in seconds. Passwords are hashed with bcrypt and all database queries use PDO prepared statements (security by default).</p>
                 </div>
 
                 <div class="feature-card" id="feature-categories">
@@ -256,7 +256,7 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </div>
                     <h3>Smart Categories</h3>
-                    <p>Organise spending into clear categories — Food, Transport, Utilities, Entertainment, and more — so trends become obvious at a glance.</p>
+                    <p>Organise spending into clear categories (Food, Transport, Utilities, Entertainment, and more) so trends become obvious at a glance.</p>
                 </div>
 
                 <div class="feature-card" id="feature-admin">
@@ -275,7 +275,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </section>
 
-    <!-- ── How It Works ───────────────────────────────────────────────────── -->
+    <!-- How It Works -->
     <section class="how-it-works" id="how-it-works" aria-labelledby="how-heading">
         <div class="how-inner">
             <div class="section-label section-label-white">How it works</div>
@@ -287,7 +287,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="step-number" aria-hidden="true">1</div>
                     <div class="step-content">
                         <h3>Create your account</h3>
-                        <p>Register with your name, email, and a secure password. No email verification, no waiting — you're in immediately.</p>
+                        <p>Register with your name, email, and a password. You're in straight away.</p>
                     </div>
                 </div>
                 <div class="step-connector" aria-hidden="true"></div>
@@ -295,7 +295,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="step-number" aria-hidden="true">2</div>
                     <div class="step-content">
                         <h3>Log your expenses</h3>
-                        <p>Add expenses with a description, amount, category, and date. Takes five seconds per entry — less time than the receipt is in your pocket.</p>
+                        <p>Add expenses with a description, amount, category, and date. Takes five seconds per entry, less time than the receipt is in your pocket.</p>
                     </div>
                 </div>
                 <div class="step-connector" aria-hidden="true"></div>
@@ -310,7 +310,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </section>
 
-    <!-- ── Final CTA ───────────────────────────────────────────────────────── -->
+    <!-- Final CTA -->
     <section class="cta-section" aria-labelledby="cta-heading">
         <div class="cta-inner">
             <div class="cta-icon" aria-hidden="true">
@@ -321,7 +321,7 @@ if (isset($_SESSION['user_id'])) {
                 Join SmartSpend for free today. No subscriptions, no ads, no nonsense.
             </p>
             <a href="/smartspend/auth/register.php" class="btn-cta" id="footer-cta-register">
-                Get started — it's free
+                Get started (it's free)
             </a>
             <p class="cta-login-link">
                 Already have an account?
@@ -330,7 +330,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </section>
 
-    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+    <!-- Footer -->
     <footer class="home-footer" role="contentinfo">
         <div class="home-footer-inner">
             <a href="/smartspend/home.php" class="home-footer-brand" aria-label="SmartSpend home">
@@ -338,7 +338,7 @@ if (isset($_SESSION['user_id'])) {
                 <span>SmartSpend</span>
             </a>
             <p class="home-footer-copy">
-                &copy; <?= date('Y') ?> SmartSpend &middot; CTEC2713 Agile Development Team Project
+                &copy; <?= date('Y') ?> SmartSpend. CTEC2713 Agile Development Team Project.
             </p>
             <nav class="home-footer-links" aria-label="Footer navigation">
                 <a href="/smartspend/auth/login.php">Login</a>
