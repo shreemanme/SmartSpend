@@ -56,9 +56,30 @@ if ($report_id !== null) {
     }
 }
 
-// Previous reports
-$prev_stmt = $pdo->prepare('SELECT * FROM tblReport WHERE user_id = ? ORDER BY generated_date DESC');
-$prev_stmt->execute([$uid]);
+// Previous reports (List, Find, Filter)
+$search = trim($_GET['search'] ?? '');
+$filter_from = trim($_GET['filter_from'] ?? '');
+$filter_to = trim($_GET['filter_to'] ?? '');
+
+$where = ['user_id = ?'];
+$params = [$uid];
+
+if ($search !== '') {
+    $where[] = 'report_name LIKE ?';
+    $params[] = "%$search%";
+}
+if ($filter_from !== '') {
+    $where[] = 'generated_date >= ?';
+    $params[] = $filter_from;
+}
+if ($filter_to !== '') {
+    $where[] = 'generated_date <= ?';
+    $params[] = $filter_to;
+}
+
+$whereClause = 'WHERE ' . implode(' AND ', $where);
+$prev_stmt = $pdo->prepare("SELECT * FROM tblReport $whereClause ORDER BY generated_date DESC");
+$prev_stmt->execute($params);
 $prev_reports = $prev_stmt->fetchAll();
 
 require_once __DIR__ . '/../includes/header.php';
@@ -162,6 +183,30 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Previous Reports -->
 <h2 class="section-title">Previous Reports</h2>
 
+<!-- Filter & Search Bar for Reports -->
+<form method="GET" action="" class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end;">
+    <div class="form-group" style="flex: 1;">
+        <label for="search">Find Report (Name)</label>
+        <input type="text" id="search" name="search" placeholder="Search name..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>">
+    </div>
+    <div class="form-group">
+        <label for="filter_from">Filter From (Generated)</label>
+        <input type="date" id="filter_from" name="filter_from" value="<?= htmlspecialchars($filter_from, ENT_QUOTES, 'UTF-8') ?>">
+    </div>
+    <div class="form-group">
+        <label for="filter_to">Filter To (Generated)</label>
+        <input type="date" id="filter_to" name="filter_to" value="<?= htmlspecialchars($filter_to, ENT_QUOTES, 'UTF-8') ?>">
+    </div>
+    <div class="form-group" style="flex: 0;">
+        <button type="submit" class="btn-primary">Apply</button>
+    </div>
+    <?php if ($search !== '' || $filter_from !== '' || $filter_to !== ''): ?>
+    <div class="form-group" style="flex: 0;">
+        <a href="/smartspend/reports/index.php" class="btn-secondary" style="display:inline-block; padding:8px 12px; text-decoration:none;">Clear</a>
+    </div>
+    <?php endif; ?>
+</form>
+
 <?php if (empty($prev_reports)): ?>
     <p class="text-muted">No reports generated yet.</p>
 <?php else: ?>
@@ -174,7 +219,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <th>To</th>
                 <th>Generated</th>
                 <th>Exported</th>
-                <th>View</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -192,9 +237,14 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </td>
                 <td>
-                    <a href="?report_id=<?= $pr['report_id'] ?>"
-                       class="btn-secondary btn-sm"
-                       id="btn-view-report-<?= $pr['report_id'] ?>">View</a>
+                    <div class="actions-cell">
+                        <a href="?report_id=<?= $pr['report_id'] ?>" class="btn-secondary btn-sm">View</a>
+                        <a href="/smartspend/reports/edit.php?id=<?= $pr['report_id'] ?>" class="btn-warning btn-sm">Edit</a>
+                        <form method="POST" action="/smartspend/reports/delete.php" style="display:inline;">
+                            <input type="hidden" name="report_id" value="<?= $pr['report_id'] ?>">
+                            <button type="submit" class="btn-danger btn-sm" onclick="return confirm('Delete this report?')">Delete</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             <?php endforeach; ?>

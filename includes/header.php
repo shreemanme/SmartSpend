@@ -60,6 +60,8 @@ function nav_active(string $path): string
                         <li><a href="/smartspend/dashboard/index.php" <?= nav_active('dashboard') ?>>Dashboard</a></li>
                         <li><a href="/smartspend/expenses/index.php" <?= nav_active('expenses') ?>>Expenses</a></li>
                         <li><a href="/smartspend/reports/index.php" <?= nav_active('reports') ?>>Reports</a></li>
+                        <li><a href="/smartspend/categories/index.php" <?= nav_active('categories') ?>>Categories</a></li>
+                        <li><a href="/smartspend/history/index.php" <?= nav_active('history') ?>>History</a></li>
                         <li><a href="/smartspend/account/index.php" <?= nav_active('account') ?>>Account</a></li>
                     <?php endif; ?>
                 <?php else: ?>

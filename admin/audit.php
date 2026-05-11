@@ -1,7 +1,7 @@
 <?php
 /**
  * Page:      admin/audit.php
- * Component: Admin Panel — Audit Log Viewer
+ * Component: Admin Panel — Audit Log Viewer (Anonymized)
  * Developer: Bibek Timsena (Audit & History Log)
  */
 
@@ -14,7 +14,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 require_once __DIR__ . '/../config/db.php';
 
 // Filters
-$filter_user   = isset($_GET['user_id'])     && $_GET['user_id']     !== '' ? (int)$_GET['user_id']  : null;
 $filter_action = trim($_GET['action_type'] ?? '');
 $filter_from   = trim($_GET['date_from']   ?? '');
 $filter_to     = trim($_GET['date_to']     ?? '');
@@ -22,10 +21,6 @@ $filter_to     = trim($_GET['date_to']     ?? '');
 $where  = 'WHERE 1=1';
 $params = [];
 
-if ($filter_user !== null) {
-    $where    .= ' AND a.user_id = ?';
-    $params[]  = $filter_user;
-}
 if (in_array($filter_action, ['CREATE', 'UPDATE', 'DELETE'])) {
     $where    .= ' AND a.action_type = ?';
     $params[]  = $filter_action;
@@ -39,17 +34,15 @@ if ($filter_to !== '') {
     $params[]  = $filter_to;
 }
 
+// Anonymized query: No user joins, no old_value selected
 $stmt = $pdo->prepare(
-    "SELECT a.*, u.full_name
+    "SELECT a.log_id, a.expense_id, a.action_type, a.action_date, a.is_reviewed
      FROM tblAuditLog a
-     JOIN tblUser u ON a.user_id = u.user_id
      $where
      ORDER BY a.action_date DESC, a.log_id DESC"
 );
 $stmt->execute($params);
 $logs = $stmt->fetchAll();
-
-$users = $pdo->query('SELECT user_id, full_name FROM tblUser ORDER BY full_name')->fetchAll();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -59,19 +52,12 @@ require_once __DIR__ . '/../includes/header.php';
     <a href="/smartspend/admin/dashboard.php" class="btn-secondary">← Admin Home</a>
 </div>
 
+<div class="alert alert-info">
+    <strong>Privacy Notice:</strong> To comply with privacy principles, user identities and specific expense data snapshots have been removed from this audit view.
+</div>
+
 <!-- Filter Bar -->
-<form method="GET" action="" class="filter-bar">
-    <div class="form-group">
-        <label for="filter-user">User</label>
-        <select id="filter-user" name="user_id">
-            <option value="">All users</option>
-            <?php foreach ($users as $u): ?>
-                <option value="<?= $u['user_id'] ?>" <?= $filter_user === (int)$u['user_id'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($u['full_name'], ENT_QUOTES, 'UTF-8') ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
+<form method="GET" action="" class="filter-bar" style="margin-top:20px;">
     <div class="form-group">
         <label for="filter-action">Action</label>
         <select id="filter-action" name="action_type">
@@ -100,22 +86,19 @@ require_once __DIR__ . '/../includes/header.php';
         <thead>
             <tr>
                 <th>Log ID</th>
-                <th>User</th>
                 <th>Expense ID</th>
                 <th>Action</th>
                 <th>Date</th>
-                <th>Old Value</th>
                 <th>Reviewed</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($logs)): ?>
-            <tr><td colspan="7" class="text-center text-muted" style="padding:20px;">No log entries found.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted" style="padding:20px;">No log entries found.</td></tr>
             <?php else: ?>
             <?php foreach ($logs as $log): ?>
             <tr>
                 <td><?= $log['log_id'] ?></td>
-                <td><?= htmlspecialchars($log['full_name'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= $log['expense_id'] ?></td>
                 <td>
                     <?php
@@ -131,17 +114,6 @@ require_once __DIR__ . '/../includes/header.php';
                     </span>
                 </td>
                 <td><?= htmlspecialchars($log['action_date'], ENT_QUOTES, 'UTF-8') ?></td>
-                <td class="old-value-cell">
-                    <?php
-                        $old = $log['old_value'] ?? null;
-                        if ($old === null) {
-                            echo '—';
-                        } else {
-                            $preview = strlen($old) > 60 ? substr($old, 0, 60) . '…' : $old;
-                            echo htmlspecialchars($preview, ENT_QUOTES, 'UTF-8');
-                        }
-                    ?>
-                </td>
                 <td>
                     <?php if ((int)$log['is_reviewed'] === 1): ?>
                         <span class="badge badge-reviewed">Reviewed</span>

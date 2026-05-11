@@ -21,8 +21,8 @@ $expense_date = '';
 $description  = '';
 
 // Load active categories
-$cat_stmt = $pdo->prepare('SELECT category_id, category_name FROM tblCategory WHERE is_active = 1 ORDER BY category_name');
-$cat_stmt->execute();
+$cat_stmt = $pdo->prepare('SELECT category_id, category_name FROM tblCategory WHERE is_active = 1 AND user_id = ? ORDER BY category_name');
+$cat_stmt->execute([$uid]);
 $categories = $cat_stmt->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -8,7 +8,7 @@
 </main><!-- /.container -->
 
 <footer role="contentinfo">
-    SmartSpend &copy; <?= date('Y') ?> | CTEC2713 Agile Development Team Project
+    SmartSpend &copy; <?= date('Y') ?> | CTEC2713 Agile Development Team Project | <a href="/smartspend/privacy.php">Privacy Policy</a>
 </footer>
 
 <script src="/smartspend/assets/js/main.js"></script>

@@ -12,8 +12,8 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/db.php';
+$uid = (int)$_SESSION['user_id'];
 
-$uid  = (int)$_SESSION['user_id'];
 $stmt = $pdo->prepare('SELECT full_name, email, created_date, role FROM tblUser WHERE user_id = ?');
 $stmt->execute([$uid]);
 $user = $stmt->fetch();
@@ -102,12 +102,21 @@ require_once __DIR__ . '/../includes/header.php';
     </form>
 </div>
 
+<!-- Download Data -->
+<div class="form-card">
+    <h2>Download My Data</h2>
+    <p>Get a copy of your personal data, including your account details, expenses, and reports in JSON format.</p>
+    <div class="form-actions" style="margin-top:15px;">
+        <a href="/smartspend/account/export_data.php" class="btn-primary" style="display:inline-block;">Download Data</a>
+    </div>
+</div>
+
 <!-- Close Account -->
 <div class="danger-zone">
-    <h3>Close Account</h3>
-    <p>Closing your account will deactivate it immediately. Your data will be preserved but you will no longer be able to log in.</p>
-    <form method="POST" action="/smartspend/account/close.php" id="form-close-account">
-        <button type="submit" id="btn-close-account" class="btn-danger">Close My Account</button>
+    <h3>Delete Account</h3>
+    <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+    <form method="POST" action="/smartspend/account/delete.php" id="form-delete-account">
+        <button type="submit" id="btn-delete-account" class="btn-danger" onclick="return confirm('Are you sure you want to permanently delete your account and all data? This cannot be undone.')">Delete My Account</button>
     </form>
 </div>
 

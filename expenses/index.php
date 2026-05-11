@@ -15,7 +15,8 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ── Filter inputs
+// ── Filter & Search inputs
+$search          = trim($_GET['search'] ?? '');
 $filter_category = isset($_GET['category_id']) && $_GET['category_id'] !== '' ? (int)$_GET['category_id'] : null;
 $filter_from     = trim($_GET['date_from'] ?? '');
 $filter_to       = trim($_GET['date_to']   ?? '');
@@ -35,6 +36,10 @@ if ($filter_from !== '') {
 if ($filter_to !== '') {
     $where    .= ' AND e.expense_date <= ?';
     $params[]  = $filter_to;
+}
+if ($search !== '') {
+    $where    .= ' AND c.category_name LIKE ?';
+    $params[]  = "%$search%";
 }
 
 // ── Pagination
@@ -66,8 +71,8 @@ $stmt->execute($params);
 $expenses = $stmt->fetchAll();
 
 // ── Categories for filter dropdown
-$cat_stmt = $pdo->prepare('SELECT category_id, category_name FROM tblCategory WHERE is_active = 1 ORDER BY category_name');
-$cat_stmt->execute();
+$cat_stmt = $pdo->prepare('SELECT category_id, category_name FROM tblCategory WHERE is_active = 1 AND user_id = ? ORDER BY category_name');
+$cat_stmt->execute([$uid]);
 $categories = $cat_stmt->fetchAll();
 
 require_once __DIR__ . '/../includes/header.php';
@@ -78,8 +83,12 @@ require_once __DIR__ . '/../includes/header.php';
     <a href="/smartspend/expenses/add.php" class="btn-primary" id="btn-add-expense">+ Add Expense</a>
 </div>
 
-<!-- Filter Bar -->
+<!-- Filter & Search Bar -->
 <form method="GET" action="" class="filter-bar" id="filter-form">
+    <div class="form-group">
+        <label for="search">Find Expense</label>
+        <input type="text" id="search" name="search" placeholder="Search category..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>">
+    </div>
     <div class="form-group">
         <label for="filter-category">Category</label>
         <select id="filter-category" name="category_id">
@@ -104,7 +113,7 @@ require_once __DIR__ . '/../includes/header.php';
         <label>&nbsp;</label>
         <button type="submit" class="btn-primary">Apply</button>
     </div>
-    <?php if ($filter_category !== null || $filter_from !== '' || $filter_to !== ''): ?>
+    <?php if ($search !== '' || $filter_category !== null || $filter_from !== '' || $filter_to !== ''): ?>
     <div class="form-group" style="flex:0;">
         <label>&nbsp;</label>
         <a href="/smartspend/expenses/index.php" class="btn-secondary">Clear</a>
