@@ -16,10 +16,9 @@ require_once __DIR__ . '/../config/db.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $note = trim($_POST['note']);
     $uid = (int)$_SESSION['user_id'];
-    
-    // Create a manual log entry. Use expense_id 0 as placeholder.
+    // Create a manual log entry. Use expense_id NULL as placeholder.
     if ($note !== '') {
-        $stmt = $pdo->prepare("INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, is_reviewed) VALUES (?, 0, 'MANUAL', CURDATE(), ?, 1)");
+        $stmt = $pdo->prepare("INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, is_reviewed) VALUES (?, NULL, 'MANUAL', CURDATE(), ?, 1)");
         $stmt->execute([$uid, json_encode(['note' => $note])]);
         $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Manual log added.'];
     }

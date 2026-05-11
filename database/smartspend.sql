@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS tblReport (
 CREATE TABLE IF NOT EXISTS tblAuditLog (
     log_id      INT           AUTO_INCREMENT PRIMARY KEY,
     user_id     INT           NOT NULL,
-    expense_id  INT           NOT NULL,
+    expense_id  INT           NULL,
     action_type VARCHAR(10)   NOT NULL,
     -- action_type values: 'CREATE', 'UPDATE', 'DELETE'
     action_date DATE          NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS tblAuditLog (
     -- old_value: NULL for CREATE, JSON snapshot for UPDATE and DELETE
     is_reviewed TINYINT(1)    NOT NULL DEFAULT 0,
     FOREIGN KEY (user_id)    REFERENCES tblUser(user_id),
-    FOREIGN KEY (expense_id) REFERENCES tblExpense(expense_id)
+    FOREIGN KEY (expense_id) REFERENCES tblExpense(expense_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ─────────────────────────────────────────
