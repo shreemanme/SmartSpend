@@ -50,8 +50,6 @@ SmartSpend/
 └── README.md           # Project documentation
 ```
 
-*(Note: Weekly Sprint Journals from the development team are also kept in the root directory for academic/tracking purposes).*
-
 ---
 
 ## 🚀 Getting Started
