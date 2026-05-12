@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      categories/delete.php
- * Component: Category Management — Toggle Active State
- * Developer: Ratnesh Kumar Yadav (Category Management)
- *
- * OOP REWRITE:
- * The procedural toggle logic has been converted into the
- * CategoryToggle class below.
- */
+// categories/delete.php — Toggles category active state via the CategoryToggle class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -30,27 +22,14 @@ if ($id === 0) {
     exit;
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: CategoryToggle
-//
-//  What it is:
-//    The blueprint for an object that flips a category between
-//    active and inactive. It includes a safety guard that prevents
-//    deactivating the last remaining active category.
-//
-//  How to use it:
-//    $toggle = new CategoryToggle($uid, $id, $pdo);  // create object
-//    $toggle->run();                                   // execute toggle
-// ════════════════════════════════════════════════════════════════════
+// Flips a category between active/inactive; prevents deactivating the last one.
 class CategoryToggle
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int  $userId;
     private int  $categoryId;
     private \PDO $pdo;
 
-    // ── Constructor ──────────────────────────────────────────────────
 
     public function __construct(int $userId, int $categoryId, \PDO $pdo)
     {
@@ -59,8 +38,7 @@ class CategoryToggle
         $this->pdo        = $pdo;
     }
 
-    // ── Private method: findCategory() ───────────────────────────────
-    // Looks up the category and returns it, or null if not found.
+    // Fetches the category row; returns null if not found.
 
     private function findCategory(): ?array
     {
@@ -73,9 +51,7 @@ class CategoryToggle
         return $row ?: null;
     }
 
-    // ── Private method: countActive() ────────────────────────────────
-    // Returns how many active categories the user currently has.
-    // Used to guard against deactivating the only active category.
+    // Returns the count of the user's currently active categories.
 
     private function countActive(): int
     {
@@ -86,8 +62,7 @@ class CategoryToggle
         return (int)$stmt->fetchColumn();
     }
 
-    // ── Private method: toggle() ─────────────────────────────────────
-    // Flips is_active from 1 to 0 or 0 to 1.
+    // Flips is_active between 1 and 0 for this category.
 
     private function toggle(): void
     {
@@ -97,10 +72,7 @@ class CategoryToggle
         )->execute([$this->categoryId, $this->userId]);
     }
 
-    // ── Public method: run() ─────────────────────────────────────────
-    // The single public entry point. Checks ownership, runs the guard,
-    // then toggles the state. Always redirects at the end.
-    // Called as: $toggle->run()
+    // Checks ownership, guards against deactivating the last category, then toggles.
 
     public function run(): void
     {
@@ -127,10 +99,6 @@ class CategoryToggle
         exit;
     }
 }
-
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-// ════════════════════════════════════════════════════════════════════
 
 $toggle = new CategoryToggle($uid, $id, $pdo);
 $toggle->run();

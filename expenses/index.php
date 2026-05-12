@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      expenses/index.php
- * Component: Expense Entry Management — List View
- * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
- *
- * OOP REWRITE:
- * The procedural filter/query logic has been converted into the
- * ExpenseFilter class below. The HTML template is unchanged.
- */
+// expenses/index.php — Lists and filters expenses via the ExpenseFilter class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -19,24 +11,9 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: ExpenseFilter
-//
-//  What it is:
-//    A class is a blueprint. ExpenseFilter is the blueprint for an
-//    object that reads filter inputs, builds SQL queries, and returns
-//    expense data. Instead of loose variables scattered at the top of
-//    the file, everything related to filtering is grouped here.
-//
-//  How to use it:
-//    $filter = new ExpenseFilter($uid, $_GET);   // create the object
-//    $rows   = $filter->getExpenses($pdo);        // call a method
-// ════════════════════════════════════════════════════════════════════
+// Reads filter inputs, builds paginated SQL queries, and returns expense rows.
 class ExpenseFilter
 {
-    // ── Properties ──────────────────────────────────────────────────
-    // A property is a variable that belongs to the class.
-    // "private" means only code inside this class can read or change it.
 
     private int    $userId;      // The logged-in user's ID
     private string $search;      // Search term typed in the text box
@@ -46,10 +23,7 @@ class ExpenseFilter
     private int    $perPage;     // How many rows to show per page
     private int    $currentPage; // Which page number we are on
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // __construct() is a special method that runs automatically the
-    // moment you write: new ExpenseFilter(...)
-    // It reads and cleans the raw $_GET data so no other method has to.
+    // Reads and sanitises $_GET filter values; initialises all properties.
 
     public function __construct(int $userId, array $get = [])
     {
@@ -63,10 +37,7 @@ class ExpenseFilter
         $this->currentPage = max(1, (int)($get['page'] ?? 1));
     }
 
-    // ── Private helper method ────────────────────────────────────────
-    // buildWhere() builds the dynamic WHERE clause and the list of
-    // bound parameters. It is "private" because only getExpenses()
-    // and countExpenses() need to call it — outside code never does.
+    // Builds the dynamic WHERE clause and bound parameters for shared use.
 
     private function buildWhere(): array
     {
@@ -94,10 +65,7 @@ class ExpenseFilter
         return [$where, $params];
     }
 
-    // ── Public method: countExpenses() ───────────────────────────────
-    // Asks the database "how many rows match my filters?"
-    // Returns a plain integer — used to calculate total pages.
-    // Called as: $filter->countExpenses($pdo)
+    // Returns the total number of matching rows (used for pagination).
 
     public function countExpenses(\PDO $pdo): int
     {
@@ -113,10 +81,7 @@ class ExpenseFilter
         return (int)$stmt->fetchColumn();
     }
 
-    // ── Public method: getExpenses() ─────────────────────────────────
-    // Fetches the expense rows for the current page.
-    // Returns an array of rows — each row is one expense.
-    // Called as: $filter->getExpenses($pdo)
+    // Returns the expense rows for the current page.
 
     public function getExpenses(\PDO $pdo): array
     {
@@ -137,10 +102,7 @@ class ExpenseFilter
         return $stmt->fetchAll();
     }
 
-    // ── Public method: getCategories() ───────────────────────────────
-    // Fetches all active categories for this user.
-    // Returns an array used to populate the filter dropdown.
-    // Called as: $filter->getCategories($pdo)
+    // Returns all active categories for the filter dropdown.
 
     public function getCategories(\PDO $pdo): array
     {
@@ -154,10 +116,7 @@ class ExpenseFilter
         return $stmt->fetchAll();
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-    // Because properties are private, the HTML template cannot read
-    // $filter->search directly. These getter methods act as a safe
-    // read-only window into the object's data.
+    // Getters — allow the HTML template to read private filter values.
 
     public function getSearch(): string     { return $this->search; }
     public function getCategoryId(): ?int   { return $this->categoryId; }
@@ -176,18 +135,6 @@ class ExpenseFilter
     }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-//
-//  new ExpenseFilter($uid, $_GET)
-//    → Creates one object from the ExpenseFilter blueprint.
-//    → Runs __construct() automatically with the logged-in user's ID
-//      and the raw URL parameters ($_GET).
-//
-//  $filter->countExpenses($pdo)
-//    → Calls the countExpenses method on the $filter object.
-//    → The arrow (->) is how you access a method or property on an object.
-// ════════════════════════════════════════════════════════════════════
 
 $filter      = new ExpenseFilter($uid, $_GET);
 

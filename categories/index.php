@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      categories/index.php
- * Component: Category Management — List View
- * Developer: Ratnesh Kumar Yadav (Category Management)
- *
- * OOP REWRITE:
- * The procedural filter/query logic has been converted into the
- * CategoryFilter class below. The HTML template is unchanged.
- */
+// categories/index.php — Lists and filters categories via the CategoryFilter class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -19,28 +11,15 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: CategoryFilter
-//
-//  What it is:
-//    The blueprint for an object that reads the search/status filters
-//    from the URL and fetches the matching categories from the database.
-//
-//  How to use it:
-//    $filter = new CategoryFilter($uid, $_GET);       // create object
-//    $categories = $filter->getCategories($pdo);      // fetch rows
-//    $search = $filter->getSearch();                   // read a filter value
-// ════════════════════════════════════════════════════════════════════
+// Reads search/status filters from the URL and returns matching category rows.
 class CategoryFilter
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int    $userId;
     private string $search;
     private string $status;   // 'active', 'inactive', or ''
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // Reads and cleans the filter values from the URL ($_GET).
+    // Reads and sanitises filter values from the URL.
 
     public function __construct(int $userId, array $get = [])
     {
@@ -49,10 +28,7 @@ class CategoryFilter
         $this->status = trim($get['status'] ?? '');
     }
 
-    // ── Public method: getCategories() ───────────────────────────────
-    // Builds the WHERE clause from the stored filter values and
-    // returns the matching category rows.
-    // Called as: $filter->getCategories($pdo)
+    // Builds the WHERE clause from filters and returns matching category rows.
 
     public function getCategories(\PDO $pdo): array
     {
@@ -75,8 +51,7 @@ class CategoryFilter
         return $stmt->fetchAll();
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-
+    // Getters — allow the template to read private filter values.
     public function getSearch(): string { return $this->search; }
     public function getStatus(): string { return $this->status; }
 
@@ -87,9 +62,6 @@ class CategoryFilter
     }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-// ════════════════════════════════════════════════════════════════════
 
 $filter     = new CategoryFilter($uid, $_GET);
 $categories = $filter->getCategories($pdo);

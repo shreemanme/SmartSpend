@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      dashboard/index.php
- * Component: User Dashboard
- * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
- *
- * OOP REWRITE:
- * The procedural stats queries have been converted into the
- * DashboardStats class below. The HTML template is unchanged.
- */
+// dashboard/index.php — Loads dashboard stats via the DashboardStats class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -19,28 +11,14 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: DashboardStats
-//
-//  What it is:
-//    The blueprint for an object that runs all four dashboard queries:
-//    total spent this month, expense count, top category, and the
-//    five most recent expenses.
-//
-//  How to use it:
-//    $stats = new DashboardStats($uid, $pdo);     // create the object
-//    $total = $stats->getTotalThisMonth();         // call a method
-//    $recent = $stats->getRecentExpenses();        // call another method
-// ════════════════════════════════════════════════════════════════════
+// Runs four dashboard queries: monthly total, count, top category, and recent expenses.
 class DashboardStats
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int  $userId;
     private \PDO $pdo;
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // Stores the user ID and database connection for use in the methods.
+    // Stores the user ID and PDO connection for use in all query methods.
 
     public function __construct(int $userId, \PDO $pdo)
     {
@@ -48,9 +26,7 @@ class DashboardStats
         $this->pdo    = $pdo;
     }
 
-    // ── Public method: getTotalThisMonth() ───────────────────────────
-    // Returns the total amount spent in the current calendar month.
-    // Called as: $stats->getTotalThisMonth()
+    // Returns the total amount spent by the user in the current calendar month.
 
     public function getTotalThisMonth(): float
     {
@@ -64,9 +40,7 @@ class DashboardStats
         return (float)$stmt->fetchColumn();
     }
 
-    // ── Public method: getCountThisMonth() ───────────────────────────
     // Returns the number of expenses recorded in the current month.
-    // Called as: $stats->getCountThisMonth()
 
     public function getCountThisMonth(): int
     {
@@ -80,10 +54,7 @@ class DashboardStats
         return (int)$stmt->fetchColumn();
     }
 
-    // ── Public method: getTopCategory() ─────────────────────────────
-    // Returns the category with the highest total spend this month,
-    // or null if there are no expenses yet.
-    // Called as: $stats->getTopCategory()
+    // Returns the top-spending category this month, or null if no expenses exist.
 
     public function getTopCategory(): ?array
     {
@@ -103,9 +74,7 @@ class DashboardStats
         return $row ?: null;
     }
 
-    // ── Public method: getRecentExpenses() ───────────────────────────
     // Returns the 5 most recent expenses for the dashboard table.
-    // Called as: $stats->getRecentExpenses()
 
     public function getRecentExpenses(): array
     {
@@ -123,15 +92,6 @@ class DashboardStats
     }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-//
-//  new DashboardStats($uid, $pdo)
-//    → Creates one object from the DashboardStats blueprint.
-//
-//  $stats->getTotalThisMonth()
-//    → Calls that method on the $stats object using the -> arrow.
-// ════════════════════════════════════════════════════════════════════
 
 $stats = new DashboardStats($uid, $pdo);
 

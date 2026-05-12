@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      expenses/add.php
- * Component: Expense Entry Management — Add Expense
- * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
- *
- * OOP REWRITE:
- * The procedural add-expense logic has been converted into the
- * ExpenseForm class below. The HTML form template is unchanged.
- */
+// expenses/add.php — Handles add-expense form via the ExpenseForm class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -19,23 +11,9 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: ExpenseForm
-//
-//  What it is:
-//    A class is a blueprint. ExpenseForm is the blueprint for an
-//    object that handles creating a new expense: loading categories,
-//    reading form input, validating it, and saving it to the database.
-//
-//  How to use it:
-//    $form = new ExpenseForm($uid, $pdo);       // create the object
-//    $form->handlePost($_POST);                  // process the form
-//    $categories = $form->getCategories();       // get dropdown data
-// ════════════════════════════════════════════════════════════════════
+// Loads categories, validates input, and saves the new expense to the database.
 class ExpenseForm
 {
-    // ── Properties ──────────────────────────────────────────────────
-    // These variables belong to the object and hold its data.
 
     private int    $userId;       // The logged-in user's ID
     private \PDO   $pdo;          // The database connection passed in
@@ -46,9 +24,7 @@ class ExpenseForm
     private string $description;  // Form value: optional description
     private array  $categories;   // List of categories for the dropdown
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // Runs automatically when you write: new ExpenseForm(...)
-    // Loads categories from the database immediately on creation.
+    // Initialises fields, loads the user's active categories from the database.
 
     public function __construct(int $userId, \PDO $pdo)
     {
@@ -71,10 +47,7 @@ class ExpenseForm
         $this->categories = $stmt->fetchAll();
     }
 
-    // ── Private method: validate() ───────────────────────────────────
-    // Checks the submitted form values and fills $this->fieldErrors.
-    // Private: only handlePost() calls it — nothing outside does.
-
+    // Validates submitted form values; fills $this->fieldErrors on failure.
     private function validate(): void
     {
         if ($this->amount === '' || (float)$this->amount <= 0) {
@@ -90,10 +63,7 @@ class ExpenseForm
         }
     }
 
-    // ── Private method: save() ───────────────────────────────────────
-    // Inserts the validated expense into the database and writes an
-    // audit log entry. Private: only handlePost() calls it.
-
+    // Inserts the validated expense and writes a CREATE audit log entry.
     private function save(): void
     {
         $stmt = $this->pdo->prepare(
@@ -117,11 +87,7 @@ class ExpenseForm
         )->execute([$this->userId, $expenseId]);
     }
 
-    // ── Public method: handlePost() ──────────────────────────────────
-    // The main entry point when the form is submitted (POST request).
-    // Reads the submitted data, validates it, and saves it if valid.
-    // Redirects on success; returns normally so the form can redisplay.
-    // Called as: $form->handlePost($_POST)
+    // Reads POST data, validates, saves if valid, and redirects on success.
 
     public function handlePost(array $post): void
     {
@@ -140,9 +106,7 @@ class ExpenseForm
         }
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-    // Because properties are private, the HTML template uses these
-    // methods to safely read the values.
+    // Getters — allow the HTML template to read private properties.
 
     public function getCategories(): array  { return $this->categories; }
     public function getFieldErrors(): array { return $this->fieldErrors; }
@@ -152,17 +116,6 @@ class ExpenseForm
     public function getDescription(): string{ return $this->description; }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-//
-//  new ExpenseForm($uid, $pdo)
-//    → Creates one object using the ExpenseForm blueprint.
-//    → Runs __construct() automatically, which loads categories.
-//
-//  $form->handlePost($_POST)
-//    → Calls the handlePost method on the $form object.
-//    → The arrow (->) is how you call a method on an object.
-// ════════════════════════════════════════════════════════════════════
 
 $form = new ExpenseForm($uid, $pdo);
 

@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      expenses/edit.php
- * Component: Expense Entry Management — Edit Expense
- * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
- *
- * OOP REWRITE:
- * The procedural edit-expense logic has been converted into the
- * ExpenseEditForm class below. The HTML form template is unchanged.
- */
+// expenses/edit.php — Handles edit-expense form via the ExpenseEditForm class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -26,22 +18,9 @@ if ($id === 0) {
     exit;
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: ExpenseEditForm
-//
-//  What it is:
-//    The blueprint for an object that loads an existing expense,
-//    populates the edit form, validates submitted changes, and
-//    saves them with an audit log entry.
-//
-//  How to use it:
-//    $form = new ExpenseEditForm($uid, $id, $pdo);  // create object
-//    $form->handlePost($_POST);                       // process form
-//    $amount = $form->getAmount();                    // read a value
-// ════════════════════════════════════════════════════════════════════
+// Loads the existing expense, validates changes, and saves with an audit log.
 class ExpenseEditForm
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int    $userId;
     private int    $expenseId;
@@ -54,9 +33,7 @@ class ExpenseEditForm
     private array  $categories;
     private array  $existing;    // The original row from the database
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // Loads the existing expense and the category dropdown list.
-    // Redirects immediately if the expense does not belong to this user.
+    // Loads the expense from the DB; redirects if not found or not owned by this user.
 
     public function __construct(int $userId, int $expenseId, \PDO $pdo)
     {
@@ -96,8 +73,7 @@ class ExpenseEditForm
         $this->categories = $cat->fetchAll();
     }
 
-    // ── Private method: validate() ───────────────────────────────────
-    // Checks the submitted values and populates $this->fieldErrors.
+    // Validates submitted values; populates $this->fieldErrors on failure.
 
     private function validate(): void
     {
@@ -114,8 +90,7 @@ class ExpenseEditForm
         }
     }
 
-    // ── Private method: update() ─────────────────────────────────────
-    // Saves the validated changes to the database and writes an audit log.
+    // Saves the validated changes and writes an UPDATE audit log entry.
 
     private function update(): void
     {
@@ -141,9 +116,7 @@ class ExpenseEditForm
         )->execute([$this->userId, $this->expenseId, $old]);
     }
 
-    // ── Public method: handlePost() ──────────────────────────────────
-    // Reads submitted data, validates it, and updates the record if valid.
-    // Called as: $form->handlePost($_POST)
+    // Reads POST data, validates, updates the record if valid, then redirects.
 
     public function handlePost(array $post): void
     {
@@ -162,8 +135,7 @@ class ExpenseEditForm
         }
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-
+    // Getters — allow the HTML template to read private properties.
     public function getCategories(): array  { return $this->categories; }
     public function getFieldErrors(): array { return $this->fieldErrors; }
     public function getAmount(): string     { return (string)$this->amount; }
@@ -172,9 +144,6 @@ class ExpenseEditForm
     public function getDescription(): string{ return $this->description; }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-// ════════════════════════════════════════════════════════════════════
 
 $form = new ExpenseEditForm($uid, $id, $pdo);
 

@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      history/index.php
- * Component: Audit Log — User View
- * Developer: Bibek Timsena (Audit & History Log)
- *
- * OOP REWRITE:
- * The procedural filter/query logic has been converted into the
- * AuditFilter class below. The HTML template is unchanged.
- */
+// history/index.php — Lists and filters audit log entries via the AuditFilter class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -18,28 +10,15 @@ if (!isset($_SESSION['user_id'])) {
 require_once __DIR__ . '/../config/db.php';
 $uid = (int)$_SESSION['user_id'];
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: AuditFilter
-//
-//  What it is:
-//    The blueprint for an object that reads search/action filters
-//    from the URL and fetches the matching audit log entries.
-//
-//  How to use it:
-//    $filter = new AuditFilter($uid, $_GET);   // create the object
-//    $logs = $filter->getLogs($pdo);            // fetch log rows
-//    $search = $filter->getSearch();            // read a filter value
-// ════════════════════════════════════════════════════════════════════
+// Reads search/action filters from the URL and returns matching audit log rows.
 class AuditFilter
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int    $userId;
     private string $search;
     private string $filterAction;  // 'CREATE', 'UPDATE', 'DELETE', 'MANUAL', or ''
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // Reads and stores the filter values from the URL.
+    // Reads and stores the search and action filter values from $_GET.
 
     public function __construct(int $userId, array $get = [])
     {
@@ -48,10 +27,7 @@ class AuditFilter
         $this->filterAction = trim($get['action'] ?? '');
     }
 
-    // ── Public method: getLogs() ─────────────────────────────────────
-    // Builds the WHERE clause and returns the matching audit log rows.
-    // Called as: $filter->getLogs($pdo)
-
+    // Builds the WHERE clause and returns matching audit log rows.
     public function getLogs(\PDO $pdo): array
     {
         $where  = ['user_id = ?'];
@@ -74,8 +50,7 @@ class AuditFilter
         return $stmt->fetchAll();
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-
+    // Getters — allow the template to read private filter values.
     public function getSearch(): string       { return $this->search; }
     public function getFilterAction(): string { return $this->filterAction; }
 
@@ -86,9 +61,6 @@ class AuditFilter
     }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-// ════════════════════════════════════════════════════════════════════
 
 $filter       = new AuditFilter($uid, $_GET);
 $logs         = $filter->getLogs($pdo);

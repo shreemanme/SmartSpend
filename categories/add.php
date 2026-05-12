@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      categories/add.php
- * Component: Category Management — Add Category
- * Developer: Ratnesh Kumar Yadav (Category Management)
- *
- * OOP REWRITE:
- * The procedural add-category logic has been converted into the
- * CategoryAddForm class below. The HTML form template is unchanged.
- */
+// categories/add.php — Handles add-category form via the CategoryAddForm class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -19,21 +11,9 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: CategoryAddForm
-//
-//  What it is:
-//    The blueprint for an object that validates and saves a new
-//    category for the logged-in user.
-//
-//  How to use it:
-//    $form = new CategoryAddForm($uid, $pdo);  // create the object
-//    $form->handlePost($_POST);                 // process the form
-//    $errors = $form->getFieldErrors();         // read errors
-// ════════════════════════════════════════════════════════════════════
+// Validates the submitted name (including duplicate check) and inserts the row.
 class CategoryAddForm
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int    $userId;
     private \PDO   $pdo;
@@ -41,7 +21,6 @@ class CategoryAddForm
     private string $categoryName;
     private string $description;
 
-    // ── Constructor ──────────────────────────────────────────────────
 
     public function __construct(int $userId, \PDO $pdo)
     {
@@ -52,9 +31,7 @@ class CategoryAddForm
         $this->description  = '';
     }
 
-    // ── Private method: validate() ───────────────────────────────────
-    // Checks the submitted name and verifies it is not a duplicate.
-
+    // Ensures the name is not empty and not already used by this user.
     private function validate(): void
     {
         if (empty($this->categoryName)) {
@@ -71,9 +48,7 @@ class CategoryAddForm
         }
     }
 
-    // ── Private method: save() ───────────────────────────────────────
-    // Inserts the new category row.
-
+    // Inserts the new category row into the database.
     private function save(): void
     {
         $this->pdo->prepare(
@@ -82,9 +57,7 @@ class CategoryAddForm
         )->execute([$this->userId, $this->categoryName, $this->description]);
     }
 
-    // ── Public method: handlePost() ──────────────────────────────────
-    // Reads form data, validates, saves if valid, and redirects.
-    // Called as: $form->handlePost($_POST)
+    // Reads POST data, validates, saves if valid, and redirects on success.
 
     public function handlePost(array $post): void
     {
@@ -101,16 +74,12 @@ class CategoryAddForm
         }
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-
+    // Getters — allow the HTML template to read private properties.
     public function getFieldErrors(): array  { return $this->fieldErrors; }
     public function getCategoryName(): string { return $this->categoryName; }
     public function getDescription(): string  { return $this->description; }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-// ════════════════════════════════════════════════════════════════════
 
 $form = new CategoryAddForm($uid, $pdo);
 

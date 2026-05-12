@@ -1,14 +1,5 @@
 <?php
-/**
- * Page:      reports/index.php
- * Component: Reports — Generate & View
- * Developer: Suraj Rai (Reporting & Analytics)
- *
- * OOP REWRITE:
- * The procedural report-loading and report-listing logic has been
- * converted into two classes: ReportLoader and ReportFilter.
- * The HTML template is unchanged.
- */
+// reports/index.php — Loads and filters reports via ReportLoader and ReportFilter.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -20,29 +11,16 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: ReportLoader
-//
-//  What it is:
-//    The blueprint for an object that loads a single saved report
-//    by its ID, then fetches its expense rows and category breakdown.
-//
-//  How to use it:
-//    $loader = new ReportLoader($uid, $reportId, $pdo);  // create object
-//    $report = $loader->getReport();                       // get meta row
-//    $rows   = $loader->getRows();                         // get expenses
-// ════════════════════════════════════════════════════════════════════
+// Loads a single saved report by ID and fetches its expenses and category breakdown.
 class ReportLoader
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int   $userId;
     private int   $reportId;
     private \PDO  $pdo;
     private ?array $report;  // The report meta row, or null if not found
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // Loads the report meta row immediately.
+    // Loads the report meta row immediately on construction.
 
     public function __construct(int $userId, int $reportId, \PDO $pdo)
     {
@@ -56,21 +34,13 @@ class ReportLoader
         $this->report = $row ?: null;
     }
 
-    // ── Public method: getReport() ───────────────────────────────────
-    // Returns the report meta row (report_name, date_from, date_to, etc.)
-    // or null if the report was not found.
-    // Called as: $loader->getReport()
-
+    // Returns the report meta row or null if not found.
     public function getReport(): ?array
     {
         return $this->report;
     }
 
-    // ── Public method: getRows() ─────────────────────────────────────
-    // Returns the expense rows that fall within the report's date range.
-    // Returns an empty array if the report meta row is null.
-    // Called as: $loader->getRows()
-
+    // Returns the expense rows within the report's date range (empty if no report).
     public function getRows(): array
     {
         if (!$this->report) {
@@ -88,10 +58,7 @@ class ReportLoader
         return $stmt->fetchAll();
     }
 
-    // ── Public method: getCategoryBreakdown() ────────────────────────
-    // Returns the per-category subtotals for the report's date range.
-    // Called as: $loader->getCategoryBreakdown()
-
+    // Returns per-category subtotals for the report's date range.
     public function getCategoryBreakdown(): array
     {
         if (!$this->report) {
@@ -111,28 +78,15 @@ class ReportLoader
     }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: ReportFilter
-//
-//  What it is:
-//    The blueprint for an object that reads the search/date filters
-//    from the URL and fetches the matching saved reports.
-//
-//  How to use it:
-//    $filter = new ReportFilter($uid, $_GET);      // create the object
-//    $reports = $filter->getReports($pdo);          // fetch matching rows
-//    $search  = $filter->getSearch();               // read a filter value
-// ════════════════════════════════════════════════════════════════════
+// Reads search/date filters from the URL and returns matching saved reports.
 class ReportFilter
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int    $userId;
     private string $search;
     private string $filterFrom;
     private string $filterTo;
 
-    // ── Constructor ──────────────────────────────────────────────────
 
     public function __construct(int $userId, array $get = [])
     {
@@ -142,9 +96,7 @@ class ReportFilter
         $this->filterTo   = trim($get['filter_to']   ?? '');
     }
 
-    // ── Public method: getReports() ──────────────────────────────────
-    // Returns saved reports matching the current filters.
-    // Called as: $filter->getReports($pdo)
+    // Returns saved reports matching the current search and date filters.
 
     public function getReports(\PDO $pdo): array
     {
@@ -170,8 +122,7 @@ class ReportFilter
         return $stmt->fetchAll();
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-
+    // Getters — allow the template to read private filter values.
     public function getSearch(): string     { return $this->search; }
     public function getFilterFrom(): string { return $this->filterFrom; }
     public function getFilterTo(): string   { return $this->filterTo; }
@@ -182,9 +133,6 @@ class ReportFilter
     }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECTS & CALLING METHODS
-// ════════════════════════════════════════════════════════════════════
 
 // If a report_id is in the URL, load that specific report
 $report_id = isset($_GET['report_id']) ? (int)$_GET['report_id'] : null;

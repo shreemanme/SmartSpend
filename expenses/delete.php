@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      expenses/delete.php
- * Component: Expense Entry Management — Soft Delete
- * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
- *
- * OOP REWRITE:
- * The procedural soft-delete logic has been converted into the
- * ExpenseDeleter class below.
- */
+// expenses/delete.php — Soft-deletes an expense via the ExpenseDeleter class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -31,28 +23,13 @@ if ($id === 0) {
     exit;
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: ExpenseDeleter
-//
-//  What it is:
-//    The blueprint for an object that safely soft-deletes an expense.
-//    It first checks ownership, then marks is_deleted = 1, then
-//    writes an audit log entry.
-//
-//  How to use it:
-//    $deleter = new ExpenseDeleter($uid, $id, $pdo);  // create object
-//    $deleter->run();                                   // execute delete
-// ════════════════════════════════════════════════════════════════════
+// Checks ownership, sets is_deleted = 1, and writes an audit log entry.
 class ExpenseDeleter
 {
-    // ── Properties ──────────────────────────────────────────────────
+    private int  $userId;
+    private int  $expenseId;
+    private \PDO $pdo;
 
-    private int  $userId;     // Logged-in user's ID
-    private int  $expenseId;  // ID of the expense to delete
-    private \PDO $pdo;        // Database connection
-
-    // ── Constructor ──────────────────────────────────────────────────
-    // Stores the IDs and database connection for use in run().
 
     public function __construct(int $userId, int $expenseId, \PDO $pdo)
     {
@@ -61,9 +38,7 @@ class ExpenseDeleter
         $this->pdo       = $pdo;
     }
 
-    // ── Private method: findExpense() ────────────────────────────────
-    // Looks up the expense and returns it, or null if not found.
-    // "private" because it's an internal helper — run() calls it.
+    // Returns the expense row or null if not found / not owned by this user.
 
     private function findExpense(): ?array
     {
@@ -76,8 +51,7 @@ class ExpenseDeleter
         return $row ?: null;
     }
 
-    // ── Private method: softDelete() ─────────────────────────────────
-    // Sets is_deleted = 1 (does NOT physically remove the row).
+    // Marks is_deleted = 1; does not physically remove the row.
 
     private function softDelete(): void
     {
@@ -87,8 +61,7 @@ class ExpenseDeleter
         )->execute([$this->expenseId, $this->userId]);
     }
 
-    // ── Private method: writeAuditLog() ─────────────────────────────
-    // Records the DELETE action and the old data in the audit log.
+    // Inserts a DELETE entry into tblAuditLog with the old row data.
 
     private function writeAuditLog(string $oldJson): void
     {
@@ -98,10 +71,7 @@ class ExpenseDeleter
         )->execute([$this->userId, $this->expenseId, $oldJson]);
     }
 
-    // ── Public method: run() ─────────────────────────────────────────
-    // The single public entry point: checks ownership, deletes, logs.
-    // Always redirects at the end.
-    // Called as: $deleter->run()
+    // Verifies ownership, soft-deletes, logs, then redirects.
 
     public function run(): void
     {
@@ -121,16 +91,6 @@ class ExpenseDeleter
         exit;
     }
 }
-
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-//
-//  new ExpenseDeleter($uid, $id, $pdo)
-//    → Creates the object from the ExpenseDeleter blueprint.
-//
-//  $deleter->run()
-//    → Calls the run method on the object using the -> arrow.
-// ════════════════════════════════════════════════════════════════════
 
 $deleter = new ExpenseDeleter($uid, $id, $pdo);
 $deleter->run();

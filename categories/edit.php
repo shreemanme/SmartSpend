@@ -1,13 +1,5 @@
 <?php
-/**
- * Page:      categories/edit.php
- * Component: Category Management — Edit Category
- * Developer: Ratnesh Kumar Yadav (Category Management)
- *
- * OOP REWRITE:
- * The procedural edit-category logic has been converted into the
- * CategoryEditForm class below. The HTML form template is unchanged.
- */
+// categories/edit.php — Handles edit-category form via the CategoryEditForm class.
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -25,21 +17,9 @@ if ($id === 0) {
     exit;
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CLASS: CategoryEditForm
-//
-//  What it is:
-//    The blueprint for an object that loads an existing category,
-//    validates submitted changes, and saves them.
-//
-//  How to use it:
-//    $form = new CategoryEditForm($uid, $id, $pdo);  // create object
-//    $form->handlePost($_POST);                        // process form
-//    $category_name = $form->getCategoryName();        // read a value
-// ════════════════════════════════════════════════════════════════════
+// Loads the existing category, validates changes, and saves to the database.
 class CategoryEditForm
 {
-    // ── Properties ──────────────────────────────────────────────────
 
     private int    $userId;
     private int    $categoryId;
@@ -48,9 +28,7 @@ class CategoryEditForm
     private string $categoryName;
     private string $description;
 
-    // ── Constructor ──────────────────────────────────────────────────
-    // Loads the existing category from the database. Redirects if
-    // the category doesn't belong to this user.
+    // Fetches the category from DB; redirects if not found or not owned by this user.
 
     public function __construct(int $userId, int $categoryId, \PDO $pdo)
     {
@@ -75,8 +53,7 @@ class CategoryEditForm
         $this->description  = $cat['description'] ?? '';
     }
 
-    // ── Private method: validate() ───────────────────────────────────
-    // Ensures the name is not empty and not already used by another category.
+    // Ensures the name is not empty and not used by another category.
 
     private function validate(): void
     {
@@ -95,8 +72,7 @@ class CategoryEditForm
         }
     }
 
-    // ── Private method: update() ─────────────────────────────────────
-    // Saves the updated name and description to the database.
+    // Persists the updated name and description to the database.
 
     private function update(): void
     {
@@ -107,9 +83,7 @@ class CategoryEditForm
         )->execute([$this->categoryName, $this->description, $this->categoryId, $this->userId]);
     }
 
-    // ── Public method: handlePost() ──────────────────────────────────
-    // Reads submitted data, validates, and updates if valid.
-    // Called as: $form->handlePost($_POST)
+    // Reads POST data, validates, and updates the record if valid.
 
     public function handlePost(array $post): void
     {
@@ -126,16 +100,12 @@ class CategoryEditForm
         }
     }
 
-    // ── Getter methods ───────────────────────────────────────────────
-
+    // Getters — allow the HTML template to read private properties.
     public function getFieldErrors(): array  { return $this->fieldErrors; }
     public function getCategoryName(): string { return $this->categoryName; }
     public function getDescription(): string  { return $this->description; }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  CREATING THE OBJECT & CALLING METHODS
-// ════════════════════════════════════════════════════════════════════
 
 $form = new CategoryEditForm($uid, $id, $pdo);
 
