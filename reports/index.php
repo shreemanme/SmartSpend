@@ -3,6 +3,11 @@
  * Page:      reports/index.php
  * Component: Reports — Generate & View
  * Developer: Suraj Rai (Reporting & Analytics)
+ *
+ * OOP REWRITE:
+ * The procedural report-loading and report-listing logic has been
+ * converted into two classes: ReportLoader and ReportFilter.
+ * The HTML template is unchanged.
  */
 
 session_start();
@@ -15,21 +20,63 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// If a report_id is passed, load and display it
-$report_id      = isset($_GET['report_id']) ? (int)$_GET['report_id'] : null;
-$report         = null;
-$report_rows    = [];
-$report_total   = 0;
-$cat_breakdown  = [];
+// ════════════════════════════════════════════════════════════════════
+//  CLASS: ReportLoader
+//
+//  What it is:
+//    The blueprint for an object that loads a single saved report
+//    by its ID, then fetches its expense rows and category breakdown.
+//
+//  How to use it:
+//    $loader = new ReportLoader($uid, $reportId, $pdo);  // create object
+//    $report = $loader->getReport();                       // get meta row
+//    $rows   = $loader->getRows();                         // get expenses
+// ════════════════════════════════════════════════════════════════════
+class ReportLoader
+{
+    // ── Properties ──────────────────────────────────────────────────
 
-if ($report_id !== null) {
-    $stmt = $pdo->prepare('SELECT * FROM tblReport WHERE report_id = ? AND user_id = ?');
-    $stmt->execute([$report_id, $uid]);
-    $report = $stmt->fetch();
+    private int   $userId;
+    private int   $reportId;
+    private \PDO  $pdo;
+    private ?array $report;  // The report meta row, or null if not found
 
-    if ($report) {
-        // Expense rows
-        $stmt = $pdo->prepare(
+    // ── Constructor ──────────────────────────────────────────────────
+    // Loads the report meta row immediately.
+
+    public function __construct(int $userId, int $reportId, \PDO $pdo)
+    {
+        $this->userId   = $userId;
+        $this->reportId = $reportId;
+        $this->pdo      = $pdo;
+
+        $stmt = $pdo->prepare('SELECT * FROM tblReport WHERE report_id = ? AND user_id = ?');
+        $stmt->execute([$reportId, $userId]);
+        $row = $stmt->fetch();
+        $this->report = $row ?: null;
+    }
+
+    // ── Public method: getReport() ───────────────────────────────────
+    // Returns the report meta row (report_name, date_from, date_to, etc.)
+    // or null if the report was not found.
+    // Called as: $loader->getReport()
+
+    public function getReport(): ?array
+    {
+        return $this->report;
+    }
+
+    // ── Public method: getRows() ─────────────────────────────────────
+    // Returns the expense rows that fall within the report's date range.
+    // Returns an empty array if the report meta row is null.
+    // Called as: $loader->getRows()
+
+    public function getRows(): array
+    {
+        if (!$this->report) {
+            return [];
+        }
+        $stmt = $this->pdo->prepare(
             'SELECT e.expense_id, e.amount, e.expense_date, e.description, c.category_name
              FROM tblExpense e
              JOIN tblCategory c ON e.category_id = c.category_id
@@ -37,12 +84,20 @@ if ($report_id !== null) {
                AND e.expense_date BETWEEN ? AND ?
              ORDER BY e.expense_date ASC'
         );
-        $stmt->execute([$uid, $report['date_from'], $report['date_to']]);
-        $report_rows  = $stmt->fetchAll();
-        $report_total = array_sum(array_column($report_rows, 'amount'));
+        $stmt->execute([$this->userId, $this->report['date_from'], $this->report['date_to']]);
+        return $stmt->fetchAll();
+    }
 
-        // Category breakdown
-        $stmt = $pdo->prepare(
+    // ── Public method: getCategoryBreakdown() ────────────────────────
+    // Returns the per-category subtotals for the report's date range.
+    // Called as: $loader->getCategoryBreakdown()
+
+    public function getCategoryBreakdown(): array
+    {
+        if (!$this->report) {
+            return [];
+        }
+        $stmt = $this->pdo->prepare(
             'SELECT c.category_name, SUM(e.amount) AS subtotal
              FROM tblExpense e
              JOIN tblCategory c ON e.category_id = c.category_id
@@ -51,36 +106,110 @@ if ($report_id !== null) {
              GROUP BY e.category_id
              ORDER BY subtotal DESC'
         );
-        $stmt->execute([$uid, $report['date_from'], $report['date_to']]);
-        $cat_breakdown = $stmt->fetchAll();
+        $stmt->execute([$this->userId, $this->report['date_from'], $this->report['date_to']]);
+        return $stmt->fetchAll();
     }
 }
 
-// Previous reports (List, Find, Filter)
-$search = trim($_GET['search'] ?? '');
-$filter_from = trim($_GET['filter_from'] ?? '');
-$filter_to = trim($_GET['filter_to'] ?? '');
+// ════════════════════════════════════════════════════════════════════
+//  CLASS: ReportFilter
+//
+//  What it is:
+//    The blueprint for an object that reads the search/date filters
+//    from the URL and fetches the matching saved reports.
+//
+//  How to use it:
+//    $filter = new ReportFilter($uid, $_GET);      // create the object
+//    $reports = $filter->getReports($pdo);          // fetch matching rows
+//    $search  = $filter->getSearch();               // read a filter value
+// ════════════════════════════════════════════════════════════════════
+class ReportFilter
+{
+    // ── Properties ──────────────────────────────────────────────────
 
-$where = ['user_id = ?'];
-$params = [$uid];
+    private int    $userId;
+    private string $search;
+    private string $filterFrom;
+    private string $filterTo;
 
-if ($search !== '') {
-    $where[] = 'report_name LIKE ?';
-    $params[] = "%$search%";
-}
-if ($filter_from !== '') {
-    $where[] = 'generated_date >= ?';
-    $params[] = $filter_from;
-}
-if ($filter_to !== '') {
-    $where[] = 'generated_date <= ?';
-    $params[] = $filter_to;
+    // ── Constructor ──────────────────────────────────────────────────
+
+    public function __construct(int $userId, array $get = [])
+    {
+        $this->userId     = $userId;
+        $this->search     = trim($get['search']      ?? '');
+        $this->filterFrom = trim($get['filter_from'] ?? '');
+        $this->filterTo   = trim($get['filter_to']   ?? '');
+    }
+
+    // ── Public method: getReports() ──────────────────────────────────
+    // Returns saved reports matching the current filters.
+    // Called as: $filter->getReports($pdo)
+
+    public function getReports(\PDO $pdo): array
+    {
+        $where  = ['user_id = ?'];
+        $params = [$this->userId];
+
+        if ($this->search !== '') {
+            $where[]  = 'report_name LIKE ?';
+            $params[] = "%{$this->search}%";
+        }
+        if ($this->filterFrom !== '') {
+            $where[]  = 'generated_date >= ?';
+            $params[] = $this->filterFrom;
+        }
+        if ($this->filterTo !== '') {
+            $where[]  = 'generated_date <= ?';
+            $params[] = $this->filterTo;
+        }
+
+        $whereClause = 'WHERE ' . implode(' AND ', $where);
+        $stmt = $pdo->prepare("SELECT * FROM tblReport $whereClause ORDER BY generated_date DESC");
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    // ── Getter methods ───────────────────────────────────────────────
+
+    public function getSearch(): string     { return $this->search; }
+    public function getFilterFrom(): string { return $this->filterFrom; }
+    public function getFilterTo(): string   { return $this->filterTo; }
+
+    public function hasActiveFilter(): bool
+    {
+        return $this->search !== '' || $this->filterFrom !== '' || $this->filterTo !== '';
+    }
 }
 
-$whereClause = 'WHERE ' . implode(' AND ', $where);
-$prev_stmt = $pdo->prepare("SELECT * FROM tblReport $whereClause ORDER BY generated_date DESC");
-$prev_stmt->execute($params);
-$prev_reports = $prev_stmt->fetchAll();
+// ════════════════════════════════════════════════════════════════════
+//  CREATING THE OBJECTS & CALLING METHODS
+// ════════════════════════════════════════════════════════════════════
+
+// If a report_id is in the URL, load that specific report
+$report_id = isset($_GET['report_id']) ? (int)$_GET['report_id'] : null;
+
+$report        = null;
+$report_rows   = [];
+$report_total  = 0;
+$cat_breakdown = [];
+
+if ($report_id !== null) {
+    $loader        = new ReportLoader($uid, $report_id, $pdo);
+    $report        = $loader->getReport();
+    $report_rows   = $loader->getRows();
+    $report_total  = array_sum(array_column($report_rows, 'amount'));
+    $cat_breakdown = $loader->getCategoryBreakdown();
+}
+
+// List / filter the saved reports
+$reportFilter = new ReportFilter($uid, $_GET);
+$prev_reports = $reportFilter->getReports($pdo);
+
+// Unpack values for the HTML template (same variable names as before)
+$search      = $reportFilter->getSearch();
+$filter_from = $reportFilter->getFilterFrom();
+$filter_to   = $reportFilter->getFilterTo();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -200,7 +329,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="form-group" style="flex: 0;">
         <button type="submit" class="btn-primary">Apply</button>
     </div>
-    <?php if ($search !== '' || $filter_from !== '' || $filter_to !== ''): ?>
+    <?php if ($reportFilter->hasActiveFilter()): ?>
     <div class="form-group" style="flex: 0;">
         <a href="/smartspend/reports/index.php" class="btn-secondary" style="display:inline-block; padding:8px 12px; text-decoration:none;">Clear</a>
     </div>

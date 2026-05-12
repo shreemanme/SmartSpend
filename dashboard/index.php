@@ -3,6 +3,10 @@
  * Page:      dashboard/index.php
  * Component: User Dashboard
  * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
+ *
+ * OOP REWRITE:
+ * The procedural stats queries have been converted into the
+ * DashboardStats class below. The HTML template is unchanged.
  */
 
 session_start();
@@ -15,53 +19,126 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// Stat 1 — Total spent this month
-$stmt = $pdo->prepare(
-    'SELECT COALESCE(SUM(amount), 0) FROM tblExpense
-     WHERE user_id = ? AND is_deleted = 0
-       AND MONTH(expense_date) = MONTH(CURDATE())
-       AND YEAR(expense_date)  = YEAR(CURDATE())'
-);
-$stmt->execute([$uid]);
-$total_month = (float)$stmt->fetchColumn();
+// ════════════════════════════════════════════════════════════════════
+//  CLASS: DashboardStats
+//
+//  What it is:
+//    The blueprint for an object that runs all four dashboard queries:
+//    total spent this month, expense count, top category, and the
+//    five most recent expenses.
+//
+//  How to use it:
+//    $stats = new DashboardStats($uid, $pdo);     // create the object
+//    $total = $stats->getTotalThisMonth();         // call a method
+//    $recent = $stats->getRecentExpenses();        // call another method
+// ════════════════════════════════════════════════════════════════════
+class DashboardStats
+{
+    // ── Properties ──────────────────────────────────────────────────
 
-// Stat 2 — Number of expenses this month
-$stmt = $pdo->prepare(
-    'SELECT COUNT(*) FROM tblExpense
-     WHERE user_id = ? AND is_deleted = 0
-       AND MONTH(expense_date) = MONTH(CURDATE())
-       AND YEAR(expense_date)  = YEAR(CURDATE())'
-);
-$stmt->execute([$uid]);
-$count_month = (int)$stmt->fetchColumn();
+    private int  $userId;
+    private \PDO $pdo;
 
-// Stat 3 — Top category this month
-$stmt = $pdo->prepare(
-    'SELECT c.category_name, SUM(e.amount) AS total
-     FROM tblExpense e
-     JOIN tblCategory c ON e.category_id = c.category_id
-     WHERE e.user_id = ? AND e.is_deleted = 0
-       AND MONTH(e.expense_date) = MONTH(CURDATE())
-       AND YEAR(e.expense_date)  = YEAR(CURDATE())
-     GROUP BY e.category_id
-     ORDER BY total DESC
-     LIMIT 1'
-);
-$stmt->execute([$uid]);
-$top_cat = $stmt->fetch();
+    // ── Constructor ──────────────────────────────────────────────────
+    // Stores the user ID and database connection for use in the methods.
 
-// Last 5 expenses
-$stmt = $pdo->prepare(
-    'SELECT e.expense_id, e.amount, e.expense_date, e.description,
-            c.category_name
-     FROM tblExpense e
-     JOIN tblCategory c ON e.category_id = c.category_id
-     WHERE e.user_id = ? AND e.is_deleted = 0
-     ORDER BY e.expense_date DESC, e.expense_id DESC
-     LIMIT 5'
-);
-$stmt->execute([$uid]);
-$recent = $stmt->fetchAll();
+    public function __construct(int $userId, \PDO $pdo)
+    {
+        $this->userId = $userId;
+        $this->pdo    = $pdo;
+    }
+
+    // ── Public method: getTotalThisMonth() ───────────────────────────
+    // Returns the total amount spent in the current calendar month.
+    // Called as: $stats->getTotalThisMonth()
+
+    public function getTotalThisMonth(): float
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT COALESCE(SUM(amount), 0) FROM tblExpense
+             WHERE user_id = ? AND is_deleted = 0
+               AND MONTH(expense_date) = MONTH(CURDATE())
+               AND YEAR(expense_date)  = YEAR(CURDATE())'
+        );
+        $stmt->execute([$this->userId]);
+        return (float)$stmt->fetchColumn();
+    }
+
+    // ── Public method: getCountThisMonth() ───────────────────────────
+    // Returns the number of expenses recorded in the current month.
+    // Called as: $stats->getCountThisMonth()
+
+    public function getCountThisMonth(): int
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM tblExpense
+             WHERE user_id = ? AND is_deleted = 0
+               AND MONTH(expense_date) = MONTH(CURDATE())
+               AND YEAR(expense_date)  = YEAR(CURDATE())'
+        );
+        $stmt->execute([$this->userId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    // ── Public method: getTopCategory() ─────────────────────────────
+    // Returns the category with the highest total spend this month,
+    // or null if there are no expenses yet.
+    // Called as: $stats->getTopCategory()
+
+    public function getTopCategory(): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT c.category_name, SUM(e.amount) AS total
+             FROM tblExpense e
+             JOIN tblCategory c ON e.category_id = c.category_id
+             WHERE e.user_id = ? AND e.is_deleted = 0
+               AND MONTH(e.expense_date) = MONTH(CURDATE())
+               AND YEAR(e.expense_date)  = YEAR(CURDATE())
+             GROUP BY e.category_id
+             ORDER BY total DESC
+             LIMIT 1'
+        );
+        $stmt->execute([$this->userId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    // ── Public method: getRecentExpenses() ───────────────────────────
+    // Returns the 5 most recent expenses for the dashboard table.
+    // Called as: $stats->getRecentExpenses()
+
+    public function getRecentExpenses(): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT e.expense_id, e.amount, e.expense_date, e.description,
+                    c.category_name
+             FROM tblExpense e
+             JOIN tblCategory c ON e.category_id = c.category_id
+             WHERE e.user_id = ? AND e.is_deleted = 0
+             ORDER BY e.expense_date DESC, e.expense_id DESC
+             LIMIT 5'
+        );
+        $stmt->execute([$this->userId]);
+        return $stmt->fetchAll();
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  CREATING THE OBJECT & CALLING METHODS
+//
+//  new DashboardStats($uid, $pdo)
+//    → Creates one object from the DashboardStats blueprint.
+//
+//  $stats->getTotalThisMonth()
+//    → Calls that method on the $stats object using the -> arrow.
+// ════════════════════════════════════════════════════════════════════
+
+$stats = new DashboardStats($uid, $pdo);
+
+$total_month = $stats->getTotalThisMonth();
+$count_month = $stats->getCountThisMonth();
+$top_cat     = $stats->getTopCategory();
+$recent      = $stats->getRecentExpenses();
 
 $first_name = htmlspecialchars(explode(' ', $_SESSION['full_name'])[0], ENT_QUOTES, 'UTF-8');
 

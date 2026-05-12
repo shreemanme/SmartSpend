@@ -1,8 +1,12 @@
 <?php
 /**
- * Page:      admin/categories.php
- * Component: Admin Panel — Category Management
+ * Page:      categories/index.php
+ * Component: Category Management — List View
  * Developer: Ratnesh Kumar Yadav (Category Management)
+ *
+ * OOP REWRITE:
+ * The procedural filter/query logic has been converted into the
+ * CategoryFilter class below. The HTML template is unchanged.
  */
 
 session_start();
@@ -13,26 +17,86 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../config/db.php';
 
-$search = trim($_GET['search'] ?? '');
-$filter_status = trim($_GET['status'] ?? '');
+$uid = (int)$_SESSION['user_id'];
 
-$where = ['user_id = ?'];
-$params = [$_SESSION['user_id']];
+// ════════════════════════════════════════════════════════════════════
+//  CLASS: CategoryFilter
+//
+//  What it is:
+//    The blueprint for an object that reads the search/status filters
+//    from the URL and fetches the matching categories from the database.
+//
+//  How to use it:
+//    $filter = new CategoryFilter($uid, $_GET);       // create object
+//    $categories = $filter->getCategories($pdo);      // fetch rows
+//    $search = $filter->getSearch();                   // read a filter value
+// ════════════════════════════════════════════════════════════════════
+class CategoryFilter
+{
+    // ── Properties ──────────────────────────────────────────────────
 
-if ($search !== '') {
-    $where[] = 'category_name LIKE ? OR description LIKE ?';
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+    private int    $userId;
+    private string $search;
+    private string $status;   // 'active', 'inactive', or ''
+
+    // ── Constructor ──────────────────────────────────────────────────
+    // Reads and cleans the filter values from the URL ($_GET).
+
+    public function __construct(int $userId, array $get = [])
+    {
+        $this->userId = $userId;
+        $this->search = trim($get['search'] ?? '');
+        $this->status = trim($get['status'] ?? '');
+    }
+
+    // ── Public method: getCategories() ───────────────────────────────
+    // Builds the WHERE clause from the stored filter values and
+    // returns the matching category rows.
+    // Called as: $filter->getCategories($pdo)
+
+    public function getCategories(\PDO $pdo): array
+    {
+        $where  = ['user_id = ?'];
+        $params = [$this->userId];
+
+        if ($this->search !== '') {
+            $where[]  = 'category_name LIKE ? OR description LIKE ?';
+            $params[] = "%{$this->search}%";
+            $params[] = "%{$this->search}%";
+        }
+        if ($this->status !== '') {
+            $where[]  = 'is_active = ?';
+            $params[] = $this->status === 'active' ? 1 : 0;
+        }
+
+        $whereClause = 'WHERE ' . implode(' AND ', $where);
+        $stmt = $pdo->prepare("SELECT * FROM tblCategory $whereClause ORDER BY category_name");
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    // ── Getter methods ───────────────────────────────────────────────
+
+    public function getSearch(): string { return $this->search; }
+    public function getStatus(): string { return $this->status; }
+
+    // Returns true if any filter is set — used to show the Clear button
+    public function hasActiveFilter(): bool
+    {
+        return $this->search !== '' || $this->status !== '';
+    }
 }
-if ($filter_status !== '') {
-    $where[] = 'is_active = ?';
-    $params[] = $filter_status === 'active' ? 1 : 0;
-}
 
-$whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
-$stmt = $pdo->prepare("SELECT * FROM tblCategory $whereClause ORDER BY category_name");
-$stmt->execute($params);
-$categories = $stmt->fetchAll();
+// ════════════════════════════════════════════════════════════════════
+//  CREATING THE OBJECT & CALLING METHODS
+// ════════════════════════════════════════════════════════════════════
+
+$filter     = new CategoryFilter($uid, $_GET);
+$categories = $filter->getCategories($pdo);
+
+// Unpack values for the HTML template (same variable names as before)
+$search        = $filter->getSearch();
+$filter_status = $filter->getStatus();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -59,7 +123,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="form-group" style="flex: 0;">
         <button type="submit" class="btn-primary">Apply</button>
     </div>
-    <?php if ($search !== '' || $filter_status !== ''): ?>
+    <?php if ($filter->hasActiveFilter()): ?>
     <div class="form-group" style="flex: 0;">
         <a href="/smartspend/categories/index.php" class="btn-secondary" style="display:inline-block; padding:8px 12px; text-decoration:none;">Clear</a>
     </div>

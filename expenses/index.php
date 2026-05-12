@@ -3,6 +3,10 @@
  * Page:      expenses/index.php
  * Component: Expense Entry Management — List View
  * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
+ *
+ * OOP REWRITE:
+ * The procedural filter/query logic has been converted into the
+ * ExpenseFilter class below. The HTML template is unchanged.
  */
 
 session_start();
@@ -15,65 +19,189 @@ require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
 
-// ── Filter & Search inputs
-$search          = trim($_GET['search'] ?? '');
-$filter_category = isset($_GET['category_id']) && $_GET['category_id'] !== '' ? (int)$_GET['category_id'] : null;
-$filter_from     = trim($_GET['date_from'] ?? '');
-$filter_to       = trim($_GET['date_to']   ?? '');
+// ════════════════════════════════════════════════════════════════════
+//  CLASS: ExpenseFilter
+//
+//  What it is:
+//    A class is a blueprint. ExpenseFilter is the blueprint for an
+//    object that reads filter inputs, builds SQL queries, and returns
+//    expense data. Instead of loose variables scattered at the top of
+//    the file, everything related to filtering is grouped here.
+//
+//  How to use it:
+//    $filter = new ExpenseFilter($uid, $_GET);   // create the object
+//    $rows   = $filter->getExpenses($pdo);        // call a method
+// ════════════════════════════════════════════════════════════════════
+class ExpenseFilter
+{
+    // ── Properties ──────────────────────────────────────────────────
+    // A property is a variable that belongs to the class.
+    // "private" means only code inside this class can read or change it.
 
-// ── Build WHERE clauses
-$where  = 'WHERE e.user_id = ? AND e.is_deleted = 0';
-$params = [$uid];
+    private int    $userId;      // The logged-in user's ID
+    private string $search;      // Search term typed in the text box
+    private ?int   $categoryId;  // Selected category (null = no filter)
+    private string $dateFrom;    // "From" date filter
+    private string $dateTo;      // "To" date filter
+    private int    $perPage;     // How many rows to show per page
+    private int    $currentPage; // Which page number we are on
 
-if ($filter_category !== null) {
-    $where    .= ' AND e.category_id = ?';
-    $params[]  = $filter_category;
+    // ── Constructor ──────────────────────────────────────────────────
+    // __construct() is a special method that runs automatically the
+    // moment you write: new ExpenseFilter(...)
+    // It reads and cleans the raw $_GET data so no other method has to.
+
+    public function __construct(int $userId, array $get = [])
+    {
+        $this->userId      = $userId;
+        $this->search      = trim($get['search']    ?? '');
+        $this->categoryId  = isset($get['category_id']) && $get['category_id'] !== ''
+                             ? (int)$get['category_id'] : null;
+        $this->dateFrom    = trim($get['date_from'] ?? '');
+        $this->dateTo      = trim($get['date_to']   ?? '');
+        $this->perPage     = 10;
+        $this->currentPage = max(1, (int)($get['page'] ?? 1));
+    }
+
+    // ── Private helper method ────────────────────────────────────────
+    // buildWhere() builds the dynamic WHERE clause and the list of
+    // bound parameters. It is "private" because only getExpenses()
+    // and countExpenses() need to call it — outside code never does.
+
+    private function buildWhere(): array
+    {
+        $where  = 'WHERE e.user_id = ? AND e.is_deleted = 0';
+        $params = [$this->userId];
+
+        if ($this->categoryId !== null) {
+            $where   .= ' AND e.category_id = ?';
+            $params[] = $this->categoryId;
+        }
+        if ($this->dateFrom !== '') {
+            $where   .= ' AND e.expense_date >= ?';
+            $params[] = $this->dateFrom;
+        }
+        if ($this->dateTo !== '') {
+            $where   .= ' AND e.expense_date <= ?';
+            $params[] = $this->dateTo;
+        }
+        if ($this->search !== '') {
+            $where   .= ' AND c.category_name LIKE ?';
+            $params[] = "%{$this->search}%";
+        }
+
+        // Returns both the WHERE string and the parameter array together
+        return [$where, $params];
+    }
+
+    // ── Public method: countExpenses() ───────────────────────────────
+    // Asks the database "how many rows match my filters?"
+    // Returns a plain integer — used to calculate total pages.
+    // Called as: $filter->countExpenses($pdo)
+
+    public function countExpenses(\PDO $pdo): int
+    {
+        [$where, $params] = $this->buildWhere();
+
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM tblExpense e
+             JOIN tblCategory c ON e.category_id = c.category_id
+             $where"
+        );
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    // ── Public method: getExpenses() ─────────────────────────────────
+    // Fetches the expense rows for the current page.
+    // Returns an array of rows — each row is one expense.
+    // Called as: $filter->getExpenses($pdo)
+
+    public function getExpenses(\PDO $pdo): array
+    {
+        [$where, $params] = $this->buildWhere();
+
+        $offset = ($this->currentPage - 1) * $this->perPage;
+
+        $stmt = $pdo->prepare(
+            "SELECT e.expense_id, e.amount, e.expense_date, e.description,
+                    c.category_name
+             FROM tblExpense e
+             JOIN tblCategory c ON e.category_id = c.category_id
+             $where
+             ORDER BY e.expense_date DESC, e.expense_id DESC
+             LIMIT {$this->perPage} OFFSET $offset"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    // ── Public method: getCategories() ───────────────────────────────
+    // Fetches all active categories for this user.
+    // Returns an array used to populate the filter dropdown.
+    // Called as: $filter->getCategories($pdo)
+
+    public function getCategories(\PDO $pdo): array
+    {
+        $stmt = $pdo->prepare(
+            'SELECT category_id, category_name
+             FROM tblCategory
+             WHERE is_active = 1 AND user_id = ?
+             ORDER BY category_name'
+        );
+        $stmt->execute([$this->userId]);
+        return $stmt->fetchAll();
+    }
+
+    // ── Getter methods ───────────────────────────────────────────────
+    // Because properties are private, the HTML template cannot read
+    // $filter->search directly. These getter methods act as a safe
+    // read-only window into the object's data.
+
+    public function getSearch(): string     { return $this->search; }
+    public function getCategoryId(): ?int   { return $this->categoryId; }
+    public function getDateFrom(): string   { return $this->dateFrom; }
+    public function getDateTo(): string     { return $this->dateTo; }
+    public function getPerPage(): int       { return $this->perPage; }
+    public function getCurrentPage(): int   { return $this->currentPage; }
+
+    // Returns true if any filter is active (used to show/hide Clear button)
+    public function hasActiveFilter(): bool
+    {
+        return $this->search !== ''
+            || $this->categoryId !== null
+            || $this->dateFrom !== ''
+            || $this->dateTo !== '';
+    }
 }
-if ($filter_from !== '') {
-    $where    .= ' AND e.expense_date >= ?';
-    $params[]  = $filter_from;
-}
-if ($filter_to !== '') {
-    $where    .= ' AND e.expense_date <= ?';
-    $params[]  = $filter_to;
-}
-if ($search !== '') {
-    $where    .= ' AND c.category_name LIKE ?';
-    $params[]  = "%$search%";
-}
 
-// ── Pagination
-$per_page    = 10;
-$page        = max(1, (int)($_GET['page'] ?? 1));
-$offset      = ($page - 1) * $per_page;
+// ════════════════════════════════════════════════════════════════════
+//  CREATING THE OBJECT & CALLING METHODS
+//
+//  new ExpenseFilter($uid, $_GET)
+//    → Creates one object from the ExpenseFilter blueprint.
+//    → Runs __construct() automatically with the logged-in user's ID
+//      and the raw URL parameters ($_GET).
+//
+//  $filter->countExpenses($pdo)
+//    → Calls the countExpenses method on the $filter object.
+//    → The arrow (->) is how you access a method or property on an object.
+// ════════════════════════════════════════════════════════════════════
 
-$count_stmt = $pdo->prepare(
-    "SELECT COUNT(*) FROM tblExpense e
-     JOIN tblCategory c ON e.category_id = c.category_id
-     $where"
-);
-$count_stmt->execute($params);
-$total_rows  = (int)$count_stmt->fetchColumn();
-$total_pages = (int)ceil($total_rows / $per_page);
-$total_pages = max(1, $total_pages);
+$filter      = new ExpenseFilter($uid, $_GET);
 
-// ── Main query
-$stmt = $pdo->prepare(
-    "SELECT e.expense_id, e.amount, e.expense_date, e.description,
-            c.category_name
-     FROM tblExpense e
-     JOIN tblCategory c ON e.category_id = c.category_id
-     $where
-     ORDER BY e.expense_date DESC, e.expense_id DESC
-     LIMIT $per_page OFFSET $offset"
-);
-$stmt->execute($params);
-$expenses = $stmt->fetchAll();
+$total_rows  = $filter->countExpenses($pdo);
+$total_pages = max(1, (int)ceil($total_rows / $filter->getPerPage()));
+$expenses    = $filter->getExpenses($pdo);
+$categories  = $filter->getCategories($pdo);
 
-// ── Categories for filter dropdown
-$cat_stmt = $pdo->prepare('SELECT category_id, category_name FROM tblCategory WHERE is_active = 1 AND user_id = ? ORDER BY category_name');
-$cat_stmt->execute([$uid]);
-$categories = $cat_stmt->fetchAll();
+// Unpack values for the HTML template (same variable names as before)
+$search          = $filter->getSearch();
+$filter_category = $filter->getCategoryId();
+$filter_from     = $filter->getDateFrom();
+$filter_to       = $filter->getDateTo();
+$page            = $filter->getCurrentPage();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -113,7 +241,7 @@ require_once __DIR__ . '/../includes/header.php';
         <label>&nbsp;</label>
         <button type="submit" class="btn-primary">Apply</button>
     </div>
-    <?php if ($search !== '' || $filter_category !== null || $filter_from !== '' || $filter_to !== ''): ?>
+    <?php if ($filter->hasActiveFilter()): ?>
     <div class="form-group" style="flex:0;">
         <label>&nbsp;</label>
         <a href="/smartspend/expenses/index.php" class="btn-secondary">Clear</a>

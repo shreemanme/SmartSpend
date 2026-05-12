@@ -1,8 +1,12 @@
 <?php
 /**
- * Page:      admin/add_category.php
- * Component: Admin Panel — Add Category
+ * Page:      categories/add.php
+ * Component: Category Management — Add Category
  * Developer: Ratnesh Kumar Yadav (Category Management)
+ *
+ * OOP REWRITE:
+ * The procedural add-category logic has been converted into the
+ * CategoryAddForm class below. The HTML form template is unchanged.
  */
 
 session_start();
@@ -13,35 +17,111 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../config/db.php';
 
-$field_errors   = [];
-$category_name  = '';
-$description    = '';
+$uid = (int)$_SESSION['user_id'];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $category_name = trim($_POST['category_name'] ?? '');
-    $description   = trim($_POST['description']   ?? '');
+// ════════════════════════════════════════════════════════════════════
+//  CLASS: CategoryAddForm
+//
+//  What it is:
+//    The blueprint for an object that validates and saves a new
+//    category for the logged-in user.
+//
+//  How to use it:
+//    $form = new CategoryAddForm($uid, $pdo);  // create the object
+//    $form->handlePost($_POST);                 // process the form
+//    $errors = $form->getFieldErrors();         // read errors
+// ════════════════════════════════════════════════════════════════════
+class CategoryAddForm
+{
+    // ── Properties ──────────────────────────────────────────────────
 
-    if (empty($category_name)) {
-        $field_errors['category_name'] = 'Category name is required.';
-    } else {
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM tblCategory WHERE category_name = ? AND user_id = ?');
-        $stmt->execute([$category_name, $_SESSION['user_id']]);
+    private int    $userId;
+    private \PDO   $pdo;
+    private array  $fieldErrors;
+    private string $categoryName;
+    private string $description;
+
+    // ── Constructor ──────────────────────────────────────────────────
+
+    public function __construct(int $userId, \PDO $pdo)
+    {
+        $this->userId       = $userId;
+        $this->pdo          = $pdo;
+        $this->fieldErrors  = [];
+        $this->categoryName = '';
+        $this->description  = '';
+    }
+
+    // ── Private method: validate() ───────────────────────────────────
+    // Checks the submitted name and verifies it is not a duplicate.
+
+    private function validate(): void
+    {
+        if (empty($this->categoryName)) {
+            $this->fieldErrors['category_name'] = 'Category name is required.';
+            return;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM tblCategory WHERE category_name = ? AND user_id = ?'
+        );
+        $stmt->execute([$this->categoryName, $this->userId]);
         if ((int)$stmt->fetchColumn() > 0) {
-            $field_errors['category_name'] = 'A category with this name already exists.';
+            $this->fieldErrors['category_name'] = 'A category with this name already exists.';
         }
     }
 
-    if (empty($field_errors)) {
-        $pdo->prepare(
+    // ── Private method: save() ───────────────────────────────────────
+    // Inserts the new category row.
+
+    private function save(): void
+    {
+        $this->pdo->prepare(
             'INSERT INTO tblCategory (user_id, category_name, description, created_date, is_active)
              VALUES (?, ?, ?, CURDATE(), 1)'
-        )->execute([$_SESSION['user_id'], $category_name, $description]);
-
-        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Category added successfully.'];
-        header('Location: /smartspend/categories/index.php');
-        exit;
+        )->execute([$this->userId, $this->categoryName, $this->description]);
     }
+
+    // ── Public method: handlePost() ──────────────────────────────────
+    // Reads form data, validates, saves if valid, and redirects.
+    // Called as: $form->handlePost($_POST)
+
+    public function handlePost(array $post): void
+    {
+        $this->categoryName = trim($post['category_name'] ?? '');
+        $this->description  = trim($post['description']   ?? '');
+
+        $this->validate();
+
+        if (empty($this->fieldErrors)) {
+            $this->save();
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Category added successfully.'];
+            header('Location: /smartspend/categories/index.php');
+            exit;
+        }
+    }
+
+    // ── Getter methods ───────────────────────────────────────────────
+
+    public function getFieldErrors(): array  { return $this->fieldErrors; }
+    public function getCategoryName(): string { return $this->categoryName; }
+    public function getDescription(): string  { return $this->description; }
 }
+
+// ════════════════════════════════════════════════════════════════════
+//  CREATING THE OBJECT & CALLING METHODS
+// ════════════════════════════════════════════════════════════════════
+
+$form = new CategoryAddForm($uid, $pdo);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $form->handlePost($_POST);
+}
+
+// Unpack values for the HTML template (same variable names as before)
+$field_errors  = $form->getFieldErrors();
+$category_name = $form->getCategoryName();
+$description   = $form->getDescription();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>

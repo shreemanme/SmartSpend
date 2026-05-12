@@ -3,6 +3,10 @@
  * Page:      expenses/edit.php
  * Component: Expense Entry Management — Edit Expense
  * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
+ *
+ * OOP REWRITE:
+ * The procedural edit-expense logic has been converted into the
+ * ExpenseEditForm class below. The HTML form template is unchanged.
  */
 
 session_start();
@@ -22,68 +26,169 @@ if ($id === 0) {
     exit;
 }
 
-// Load existing expense — ownership check
-$stmt = $pdo->prepare('SELECT * FROM tblExpense WHERE expense_id = ? AND user_id = ? AND is_deleted = 0');
-$stmt->execute([$id, $uid]);
-$existing = $stmt->fetch();
+// ════════════════════════════════════════════════════════════════════
+//  CLASS: ExpenseEditForm
+//
+//  What it is:
+//    The blueprint for an object that loads an existing expense,
+//    populates the edit form, validates submitted changes, and
+//    saves them with an audit log entry.
+//
+//  How to use it:
+//    $form = new ExpenseEditForm($uid, $id, $pdo);  // create object
+//    $form->handlePost($_POST);                       // process form
+//    $amount = $form->getAmount();                    // read a value
+// ════════════════════════════════════════════════════════════════════
+class ExpenseEditForm
+{
+    // ── Properties ──────────────────────────────────────────────────
 
-if (!$existing) {
-    $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Expense not found.'];
-    header('Location: /smartspend/expenses/index.php');
-    exit;
-}
+    private int    $userId;
+    private int    $expenseId;
+    private \PDO   $pdo;
+    private array  $fieldErrors;
+    private string $amount;
+    private string $categoryId;
+    private string $expenseDate;
+    private string $description;
+    private array  $categories;
+    private array  $existing;    // The original row from the database
 
-// Load active categories
-$cat_stmt = $pdo->prepare('SELECT category_id, category_name FROM tblCategory WHERE is_active = 1 AND user_id = ? ORDER BY category_name');
-$cat_stmt->execute([$uid]);
-$categories = $cat_stmt->fetchAll();
+    // ── Constructor ──────────────────────────────────────────────────
+    // Loads the existing expense and the category dropdown list.
+    // Redirects immediately if the expense does not belong to this user.
 
-$field_errors = [];
-$amount       = $existing['amount'];
-$category_id  = $existing['category_id'];
-$expense_date = $existing['expense_date'];
-$description  = $existing['description'] ?? '';
+    public function __construct(int $userId, int $expenseId, \PDO $pdo)
+    {
+        $this->userId     = $userId;
+        $this->expenseId  = $expenseId;
+        $this->pdo        = $pdo;
+        $this->fieldErrors = [];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $amount       = trim($_POST['amount']       ?? '');
-    $category_id  = trim($_POST['category_id']  ?? '');
-    $expense_date = trim($_POST['expense_date']  ?? '');
-    $description  = trim($_POST['description']   ?? '');
+        // Load the expense — ownership check prevents editing others' data
+        $stmt = $pdo->prepare(
+            'SELECT * FROM tblExpense
+             WHERE expense_id = ? AND user_id = ? AND is_deleted = 0'
+        );
+        $stmt->execute([$expenseId, $userId]);
+        $existing = $stmt->fetch();
 
-    if ($amount === '' || (float)$amount <= 0) {
-        $field_errors['amount'] = 'Please enter a valid amount greater than 0.';
+        if (!$existing) {
+            $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Expense not found.'];
+            header('Location: /smartspend/expenses/index.php');
+            exit;
+        }
+
+        $this->existing     = $existing;
+        $this->amount       = $existing['amount'];
+        $this->categoryId   = $existing['category_id'];
+        $this->expenseDate  = $existing['expense_date'];
+        $this->description  = $existing['description'] ?? '';
+
+        // Load categories for the dropdown
+        $cat = $pdo->prepare(
+            'SELECT category_id, category_name
+             FROM tblCategory
+             WHERE is_active = 1 AND user_id = ?
+             ORDER BY category_name'
+        );
+        $cat->execute([$userId]);
+        $this->categories = $cat->fetchAll();
     }
-    if ($category_id === '') {
-        $field_errors['category_id'] = 'Please select a category.';
-    }
-    if ($expense_date === '') {
-        $field_errors['expense_date'] = 'Please enter a date.';
-    } elseif ($expense_date > date('Y-m-d')) {
-        $field_errors['expense_date'] = 'Expense date cannot be in the future.';
+
+    // ── Private method: validate() ───────────────────────────────────
+    // Checks the submitted values and populates $this->fieldErrors.
+
+    private function validate(): void
+    {
+        if ($this->amount === '' || (float)$this->amount <= 0) {
+            $this->fieldErrors['amount'] = 'Please enter a valid amount greater than 0.';
+        }
+        if ($this->categoryId === '') {
+            $this->fieldErrors['category_id'] = 'Please select a category.';
+        }
+        if ($this->expenseDate === '') {
+            $this->fieldErrors['expense_date'] = 'Please enter a date.';
+        } elseif ($this->expenseDate > date('Y-m-d')) {
+            $this->fieldErrors['expense_date'] = 'Expense date cannot be in the future.';
+        }
     }
 
-    if (empty($field_errors)) {
-        $old = json_encode($existing);
+    // ── Private method: update() ─────────────────────────────────────
+    // Saves the validated changes to the database and writes an audit log.
 
-        $update = $pdo->prepare(
+    private function update(): void
+    {
+        $old = json_encode($this->existing);
+
+        $this->pdo->prepare(
             'UPDATE tblExpense
              SET amount = ?, category_id = ?, expense_date = ?, description = ?
              WHERE expense_id = ? AND user_id = ?'
-        );
-        $update->execute([(float)$amount, (int)$category_id, $expense_date, $description, $id, $uid]);
+        )->execute([
+            (float)$this->amount,
+            (int)$this->categoryId,
+            $this->expenseDate,
+            $this->description,
+            $this->expenseId,
+            $this->userId,
+        ]);
 
         // Audit log — UPDATE
-        $log = $pdo->prepare(
+        $this->pdo->prepare(
             'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, is_reviewed)
              VALUES (?, ?, \'UPDATE\', CURDATE(), ?, 0)'
-        );
-        $log->execute([$uid, $id, $old]);
-
-        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Expense updated.'];
-        header('Location: /smartspend/expenses/index.php');
-        exit;
+        )->execute([$this->userId, $this->expenseId, $old]);
     }
+
+    // ── Public method: handlePost() ──────────────────────────────────
+    // Reads submitted data, validates it, and updates the record if valid.
+    // Called as: $form->handlePost($_POST)
+
+    public function handlePost(array $post): void
+    {
+        $this->amount      = trim($post['amount']       ?? '');
+        $this->categoryId  = trim($post['category_id']  ?? '');
+        $this->expenseDate = trim($post['expense_date']  ?? '');
+        $this->description = trim($post['description']   ?? '');
+
+        $this->validate();
+
+        if (empty($this->fieldErrors)) {
+            $this->update();
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Expense updated.'];
+            header('Location: /smartspend/expenses/index.php');
+            exit;
+        }
+    }
+
+    // ── Getter methods ───────────────────────────────────────────────
+
+    public function getCategories(): array  { return $this->categories; }
+    public function getFieldErrors(): array { return $this->fieldErrors; }
+    public function getAmount(): string     { return (string)$this->amount; }
+    public function getCategoryId(): string { return (string)$this->categoryId; }
+    public function getExpenseDate(): string{ return $this->expenseDate; }
+    public function getDescription(): string{ return $this->description; }
 }
+
+// ════════════════════════════════════════════════════════════════════
+//  CREATING THE OBJECT & CALLING METHODS
+// ════════════════════════════════════════════════════════════════════
+
+$form = new ExpenseEditForm($uid, $id, $pdo);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $form->handlePost($_POST);
+}
+
+// Unpack values for the HTML template (same variable names as before)
+$categories   = $form->getCategories();
+$field_errors = $form->getFieldErrors();
+$amount       = $form->getAmount();
+$category_id  = $form->getCategoryId();
+$expense_date = $form->getExpenseDate();
+$description  = $form->getDescription();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
