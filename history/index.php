@@ -17,6 +17,20 @@ class AuditFilter
     private int    $userId;
     private string $search;
     private string $filterAction;  // 'CREATE', 'UPDATE', 'DELETE', 'MANUAL', or ''
+    private string $searchError = '';
+
+    // Maps user-facing labels (any case) to the raw DB action_type values.
+    private const LABEL_MAP = [
+        'created'    => 'CREATE',
+        'create'     => 'CREATE',
+        'updated'    => 'UPDATE',
+        'update'     => 'UPDATE',
+        'deleted'    => 'DELETE',
+        'delete'     => 'DELETE',
+        'note added' => 'MANUAL',
+        'note'       => 'MANUAL',
+        'manual'     => 'MANUAL',
+    ];
 
     // Reads and stores the search and action filter values from $_GET.
 
@@ -27,15 +41,48 @@ class AuditFilter
         $this->filterAction = trim($get['action'] ?? '');
     }
 
-    // Builds the WHERE clause and returns matching audit log rows.
+    // Translates a user-typed label to its DB value; returns null if unrecognised.
+    private function resolveSearch(): ?string
+    {
+        if ($this->search === '') return null;
+        return self::LABEL_MAP[strtolower($this->search)] ?? null;
+    }
+
+    // Validates the search term; sets $searchError and returns false if invalid.
+    private function validate(): bool
+    {
+        if ($this->search === '') return true;
+
+        if (is_numeric($this->search)) {
+            $this->searchError = 'Numbers are not valid search terms. Please enter an action name such as “Created”, “Updated”, “Deleted”, or “Note Added”.';
+            return false;
+        }
+
+        if ($this->resolveSearch() === null) {
+            $this->searchError = '“' . htmlspecialchars($this->search, ENT_QUOTES, 'UTF-8') . '” is not a recognised action. Valid options are: Created, Updated, Deleted, Note Added.';
+            return false;
+        }
+
+        return true;
+    }
+
+    // Builds the WHERE clause and returns matching audit log rows; returns [] if input is invalid.
     public function getLogs(\PDO $pdo): array
     {
+        if (!$this->validate()) return [];
+
         $where  = ['user_id = ?'];
         $params = [$this->userId];
 
         if ($this->search !== '') {
-            $where[]  = 'action_type LIKE ?';
-            $params[] = "%{$this->search}%";
+            $resolved = $this->resolveSearch();
+            if ($resolved !== null) {
+                $where[]  = 'action_type = ?';
+                $params[] = $resolved;
+            } else {
+                $where[]  = 'action_type LIKE ?';
+                $params[] = "%{$this->search}%";
+            }
         }
         if ($this->filterAction !== '') {
             $where[]  = 'action_type = ?';
@@ -53,8 +100,9 @@ class AuditFilter
     // Getters — allow the template to read private filter values.
     public function getSearch(): string       { return $this->search; }
     public function getFilterAction(): string { return $this->filterAction; }
+    public function getSearchError(): string  { return $this->searchError; }
 
-    // Returns true if any filter is active — used to show the Clear button
+    // Returns true if any filter is active — used to show the Clear button.
     public function hasActiveFilter(): bool
     {
         return $this->search !== '' || $this->filterAction !== '';
@@ -62,10 +110,19 @@ class AuditFilter
 }
 
 
-$filter       = new AuditFilter($uid, $_GET);
-$logs         = $filter->getLogs($pdo);
-$search       = $filter->getSearch();
+$filter        = new AuditFilter($uid, $_GET);
+$logs          = $filter->getLogs($pdo);
+$search        = $filter->getSearch();
 $filter_action = $filter->getFilterAction();
+$search_error  = $filter->getSearchError();
+
+// Build a category_id → name map so we can resolve IDs stored in JSON.
+$catStmt = $pdo->prepare('SELECT category_id, category_name FROM tblCategory WHERE user_id = ?');
+$catStmt->execute([$uid]);
+$categoryMap = [];
+foreach ($catStmt->fetchAll() as $c) {
+    $categoryMap[(int)$c['category_id']] = $c['category_name'];
+}
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -76,26 +133,34 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <!-- Search and Filter Bar -->
-<form method="GET" action="" class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end;">
+<form method="GET" action="" class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-start;">
     <div class="form-group" style="flex: 1;">
         <label for="search">Find (Action)</label>
-        <input type="text" id="search" name="search" placeholder="Search action..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>">
+        <input type="text" id="search" name="search"
+               placeholder="e.g. Created, Updated, Deleted"
+               value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>"
+               class="<?= $search_error ? 'input-error' : '' ?>">
+        <?php if ($search_error): ?>
+            <span class="form-error"><?= $search_error ?></span>
+        <?php endif; ?>
     </div>
     <div class="form-group">
         <label for="action">Filter by Action</label>
         <select id="action" name="action">
             <option value="">All Actions</option>
-            <option value="CREATE" <?= $filter_action === 'CREATE' ? 'selected' : '' ?>>Create</option>
-            <option value="UPDATE" <?= $filter_action === 'UPDATE' ? 'selected' : '' ?>>Update</option>
-            <option value="DELETE" <?= $filter_action === 'DELETE' ? 'selected' : '' ?>>Delete</option>
-            <option value="MANUAL" <?= $filter_action === 'MANUAL' ? 'selected' : '' ?>>Manual Note</option>
+            <option value="CREATE" <?= $filter_action === 'CREATE' ? 'selected' : '' ?>>Created</option>
+            <option value="UPDATE" <?= $filter_action === 'UPDATE' ? 'selected' : '' ?>>Updated</option>
+            <option value="DELETE" <?= $filter_action === 'DELETE' ? 'selected' : '' ?>>Deleted</option>
+            <option value="MANUAL" <?= $filter_action === 'MANUAL' ? 'selected' : '' ?>>Note Added</option>
         </select>
     </div>
     <div class="form-group" style="flex: 0;">
+        <label>&nbsp;</label>
         <button type="submit" class="btn-primary">Apply</button>
     </div>
     <?php if ($filter->hasActiveFilter()): ?>
     <div class="form-group" style="flex: 0;">
+        <label>&nbsp;</label>
         <a href="/smartspend/history/index.php" class="btn-secondary" style="display:inline-block; padding:8px 12px; text-decoration:none;">Clear</a>
     </div>
     <?php endif; ?>
@@ -117,43 +182,64 @@ require_once __DIR__ . '/../includes/header.php';
             <tr>
                 <td><?= htmlspecialchars($log['action_date'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td>
-                    <span class="badge badge-secondary"><?= htmlspecialchars($log['action_type'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php
+                        $pastTense = [
+                            'CREATE' => '<span class="badge badge-success">Created</span>',
+                            'UPDATE' => '<span class="badge badge-warning">Updated</span>',
+                            'DELETE' => '<span class="badge badge-danger">Deleted</span>',
+                            'MANUAL' => '<span class="badge badge-secondary">Note Added</span>',
+                        ];
+                        $actionType = $log['action_type'] ?? 'MANUAL';
+                        echo $pastTense[$actionType] ?? '<span class="badge badge-secondary">' . htmlspecialchars($actionType, ENT_QUOTES, 'UTF-8') . '</span>';
+                    ?>
                 </td>
                 <td>
                     <?php
-                        $oldVal = $log['old_value'] ?? '';
-                        $decoded = json_decode($oldVal, true);
-                        if (is_array($decoded)) {
-                            // Check if it's an expense
-                            if (isset($decoded['amount']) && isset($decoded['expense_date'])) {
-                                $amt = number_format((float)$decoded['amount'], 2);
-                                $date = htmlspecialchars($decoded['expense_date'], ENT_QUOTES, 'UTF-8');
-                                $desc = !empty($decoded['description']) ? htmlspecialchars($decoded['description'], ENT_QUOTES, 'UTF-8') : 'No description';
-                                echo "Expense: <strong>$" . $amt . "</strong> on " . $date . " <br><small><em>(" . $desc . ")</em></small>";
-                            } 
-                            // Check if it's a category
-                            elseif (isset($decoded['category_name'])) {
-                                echo "Category: <strong>" . htmlspecialchars($decoded['category_name'], ENT_QUOTES, 'UTF-8') . "</strong>";
-                            } 
-                            // Generic fallback filtering out database IDs
-                            else {
-                                $parts = [];
-                                $hidden_keys = ['expense_id', 'user_id', 'category_id', 'is_deleted', 'is_active', 'created_at', 'updated_at', 'log_id', 'password_hash'];
-                                foreach ($decoded as $k => $v) {
-                                    if (in_array($k, $hidden_keys)) continue;
-                                    
-                                    $cleanKey = ucwords(str_replace('_', ' ', $k));
-                                    $cleanVal = $v === '' ? '—' : (string)$v;
-                                    
-                                    if ($k === 'amount') {
-                                        $cleanVal = '$' . number_format((float)$v, 2);
-                                    }
-                                    
-                                    $parts[] = '<strong>' . htmlspecialchars($cleanKey, ENT_QUOTES, 'UTF-8') . ':</strong> ' . htmlspecialchars($cleanVal, ENT_QUOTES, 'UTF-8');
-                                }
-                                echo empty($parts) ? '<em>Record updated</em>' : implode('<br>', $parts);
+                        $oldVal     = $log['old_value'] ?? '';
+                        $newVal     = $log['new_value']  ?? '';
+                        $oldData    = json_decode($oldVal, true);
+                        $newData    = json_decode($newVal, true);
+                        $actionType = $log['action_type'] ?? '';
+
+                        // Resolve category name from the map using either stored name or ID.
+                        $resolveCat = function(array $data) use ($categoryMap): string {
+                            if (!empty($data['category_name'])) {
+                                return htmlspecialchars($data['category_name'], ENT_QUOTES, 'UTF-8');
                             }
+                            $cid = (int)($data['category_id'] ?? 0);
+                            return $cid && isset($categoryMap[$cid])
+                                ? htmlspecialchars($categoryMap[$cid], ENT_QUOTES, 'UTF-8')
+                                : '—';
+                        };
+
+                        if ($actionType === 'UPDATE' && is_array($oldData) && is_array($newData)) {
+                            // Inline before → after: amount, category, description
+                            $oldAmt  = is_numeric($oldData['amount'] ?? null) ? '£' . number_format((float)$oldData['amount'], 2) : '—';
+                            $newAmt  = is_numeric($newData['amount'] ?? null) ? '£' . number_format((float)$newData['amount'], 2) : '—';
+                            $cat     = $resolveCat($newData);
+                            $desc    = htmlspecialchars($newData['description'] ?? $oldData['description'] ?? '', ENT_QUOTES, 'UTF-8');
+                            echo "<span class=\"audit-before\">$oldAmt</span>"
+                               . " <span class=\"audit-arrow\">&#8594;</span> "
+                               . "<span class=\"audit-after\">$newAmt</span>";
+                            if ($cat !== '—') echo "<br><small>Category: <strong>$cat</strong></small>";
+                            if ($desc !== '')  echo "<br><small>$desc</small>";
+
+                        } elseif (is_array($oldData) && isset($oldData['amount'])) {
+                            // CREATE / DELETE rows with expense data
+                            $amt  = '£' . number_format((float)$oldData['amount'], 2);
+                            $date = htmlspecialchars($oldData['expense_date'] ?? '', ENT_QUOTES, 'UTF-8');
+                            $cat  = $resolveCat($oldData);
+                            $desc = htmlspecialchars($oldData['description'] ?? '', ENT_QUOTES, 'UTF-8');
+                            echo "<strong>$amt</strong>" . ($date ? " on $date" : '');
+                            if ($cat !== '—') echo "<br><small>Category: <strong>$cat</strong></small>";
+                            if ($desc !== '')  echo "<br><small>$desc</small>";
+
+                        } elseif (is_array($oldData) && isset($oldData['category_name'])) {
+                            // Category action
+                            echo 'Category: <strong>' . htmlspecialchars($oldData['category_name'], ENT_QUOTES, 'UTF-8') . '</strong>';
+
                         } else {
+                            // MANUAL note or plain text
                             echo htmlspecialchars($oldVal === '' ? '—' : $oldVal, ENT_QUOTES, 'UTF-8');
                         }
                     ?>

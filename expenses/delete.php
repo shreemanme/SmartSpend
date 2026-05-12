@@ -38,13 +38,15 @@ class ExpenseDeleter
         $this->pdo       = $pdo;
     }
 
-    // Returns the expense row or null if not found / not owned by this user.
+    // Returns the expense row (with category_name) or null if not found / not owned by this user.
 
     private function findExpense(): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM tblExpense
-             WHERE expense_id = ? AND user_id = ? AND is_deleted = 0'
+            'SELECT e.*, c.category_name
+             FROM tblExpense e
+             LEFT JOIN tblCategory c ON c.category_id = e.category_id
+             WHERE e.expense_id = ? AND e.user_id = ? AND e.is_deleted = 0'
         );
         $stmt->execute([$this->expenseId, $this->userId]);
         $row = $stmt->fetch();

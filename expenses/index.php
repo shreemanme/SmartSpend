@@ -22,6 +22,7 @@ class ExpenseFilter
     private string $dateTo;      // "To" date filter
     private int    $perPage;     // How many rows to show per page
     private int    $currentPage; // Which page number we are on
+    private string $searchError = '';
 
     // Reads and sanitises $_GET filter values; initialises all properties.
 
@@ -35,6 +36,19 @@ class ExpenseFilter
         $this->dateTo      = trim($get['date_to']   ?? '');
         $this->perPage     = 10;
         $this->currentPage = max(1, (int)($get['page'] ?? 1));
+    }
+
+    // Validates the search term; sets $searchError and returns false if invalid.
+    private function validate(): bool
+    {
+        if ($this->search === '') return true;
+
+        if (is_numeric($this->search)) {
+            $this->searchError = 'Numbers are not valid search terms for expenses. Please enter a category name.';
+            return false;
+        }
+
+        return true;
     }
 
     // Builds the dynamic WHERE clause and bound parameters for shared use.
@@ -69,6 +83,8 @@ class ExpenseFilter
 
     public function countExpenses(\PDO $pdo): int
     {
+        if (!$this->validate()) return 0;
+
         [$where, $params] = $this->buildWhere();
 
         $stmt = $pdo->prepare(
@@ -85,6 +101,8 @@ class ExpenseFilter
 
     public function getExpenses(\PDO $pdo): array
     {
+        if (!$this->validate()) return [];
+
         [$where, $params] = $this->buildWhere();
 
         $offset = ($this->currentPage - 1) * $this->perPage;
@@ -124,6 +142,7 @@ class ExpenseFilter
     public function getDateTo(): string     { return $this->dateTo; }
     public function getPerPage(): int       { return $this->perPage; }
     public function getCurrentPage(): int   { return $this->currentPage; }
+    public function getSearchError(): string { return $this->searchError; }
 
     // Returns true if any filter is active (used to show/hide Clear button)
     public function hasActiveFilter(): bool
@@ -149,6 +168,7 @@ $filter_category = $filter->getCategoryId();
 $filter_from     = $filter->getDateFrom();
 $filter_to       = $filter->getDateTo();
 $page            = $filter->getCurrentPage();
+$search_error    = $filter->getSearchError();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -162,7 +182,13 @@ require_once __DIR__ . '/../includes/header.php';
 <form method="GET" action="" class="filter-bar" id="filter-form">
     <div class="form-group">
         <label for="search">Find Expense</label>
-        <input type="text" id="search" name="search" placeholder="Search category..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>">
+        <input type="text" id="search" name="search"
+               placeholder="Search category..."
+               value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>"
+               class="<?= $search_error ? 'input-error' : '' ?>">
+        <?php if ($search_error): ?>
+            <span class="form-error"><?= $search_error ?></span>
+        <?php endif; ?>
     </div>
     <div class="form-group">
         <label for="filter-category">Category</label>

@@ -90,11 +90,16 @@ class ExpenseEditForm
         }
     }
 
-    // Saves the validated changes and writes an UPDATE audit log entry.
+    // Saves the validated changes and writes an UPDATE audit log entry with old and new values.
 
     private function update(): void
     {
-        $old = json_encode($this->existing);
+        // Resolve old category name
+        $oldCatStmt = $this->pdo->prepare('SELECT category_name FROM tblCategory WHERE category_id = ?');
+        $oldCatStmt->execute([(int)$this->existing['category_id']]);
+        $oldCatName = (string)($oldCatStmt->fetchColumn() ?: '');
+
+        $old = json_encode(array_merge($this->existing, ['category_name' => $oldCatName]));
 
         $this->pdo->prepare(
             'UPDATE tblExpense
@@ -109,11 +114,25 @@ class ExpenseEditForm
             $this->userId,
         ]);
 
-        // Audit log — UPDATE
+        // Resolve new category name
+        $newCatStmt = $this->pdo->prepare('SELECT category_name FROM tblCategory WHERE category_id = ?');
+        $newCatStmt->execute([(int)$this->categoryId]);
+        $newCatName = (string)($newCatStmt->fetchColumn() ?: '');
+
+        // Capture new values including category_name for the audit log
+        $new = json_encode([
+            'amount'        => $this->amount,
+            'category_id'   => $this->categoryId,
+            'category_name' => $newCatName,
+            'expense_date'  => $this->expenseDate,
+            'description'   => $this->description,
+        ]);
+
+        // Audit log — UPDATE (stores both old and new values)
         $this->pdo->prepare(
-            'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, is_reviewed)
-             VALUES (?, ?, \'UPDATE\', CURDATE(), ?, 0)'
-        )->execute([$this->userId, $this->expenseId, $old]);
+            'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, new_value, is_reviewed)
+             VALUES (?, ?, \'UPDATE\', CURDATE(), ?, ?, 0)'
+        )->execute([$this->userId, $this->expenseId, $old, $new]);
     }
 
     // Reads POST data, validates, updates the record if valid, then redirects.

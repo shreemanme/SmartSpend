@@ -26,7 +26,8 @@ function nav_active(string $path): string
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="SmartSpend — Personal expense tracker. Log, manage and analyse your spending with ease.">
-    <title>SmartSpend</title>
+    <meta name="theme-color" content="#00A844">
+    <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') . ' — SmartSpend' : 'SmartSpend' ?></title>
     <link rel="stylesheet" href="/smartspend/assets/css/style.css">
 </head>
 
