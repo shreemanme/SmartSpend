@@ -1,9 +1,5 @@
 <?php
-/**
- * Page:      admin/categories.php
- * Component: Admin Panel — Category Management
- * Developer: Ratnesh Kumar Yadav (Category Management)
- */
+// admin/categories.php — Lists all categories via the AdminCategoryList class.
 
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -13,8 +9,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_once __DIR__ . '/../config/db.php';
 
-$stmt = $pdo->query('SELECT * FROM tblCategory ORDER BY category_name');
-$categories = $stmt->fetchAll();
+// Fetches all categories for the admin category management table.
+class AdminCategoryList
+{
+    // Returns all categories ordered by name.
+    public function getCategories(\PDO $pdo): array
+    {
+        return $pdo->query('SELECT * FROM tblCategory ORDER BY category_name')->fetchAll();
+    }
+}
+
+$list       = new AdminCategoryList();
+$categories = $list->getCategories($pdo);
 
 require_once __DIR__ . '/../includes/header.php';
 ?>

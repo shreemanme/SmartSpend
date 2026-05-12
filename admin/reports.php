@@ -1,9 +1,5 @@
 <?php
-/**
- * Page:      admin/reports.php
- * Component: Admin Panel — Reports Overview (Read-only)
- * Developer: Suraj Rai (Reporting & Analytics)
- */
+// admin/reports.php — Read-only admin view of all reports via AdminReportFilter.
 
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -13,27 +9,52 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_once __DIR__ . '/../config/db.php';
 
-$filter_user = isset($_GET['user_id']) && $_GET['user_id'] !== '' ? (int)$_GET['user_id'] : null;
+// Filters the full reports list by an optional user ID.
+class AdminReportFilter
+{
+    private ?int $filterUser;
 
-$where  = 'WHERE 1=1';
-$params = [];
+    public function __construct(array $get = [])
+    {
+        $this->filterUser = isset($get['user_id']) && $get['user_id'] !== ''
+            ? (int)$get['user_id'] : null;
+    }
 
-if ($filter_user !== null) {
-    $where    .= ' AND r.user_id = ?';
-    $params[]  = $filter_user;
+    // Returns all reports, optionally filtered to one user.
+    public function getReports(\PDO $pdo): array
+    {
+        $where  = 'WHERE 1=1';
+        $params = [];
+
+        if ($this->filterUser !== null) {
+            $where   .= ' AND r.user_id = ?';
+            $params[] = $this->filterUser;
+        }
+
+        $stmt = $pdo->prepare(
+            "SELECT r.*, u.full_name
+             FROM tblReport r
+             JOIN tblUser u ON r.user_id = u.user_id
+             $where
+             ORDER BY r.generated_date DESC"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    // Returns all users for the filter dropdown.
+    public function getUsers(\PDO $pdo): array
+    {
+        return $pdo->query('SELECT user_id, full_name FROM tblUser ORDER BY full_name')->fetchAll();
+    }
+
+    public function getFilterUser(): ?int { return $this->filterUser; }
 }
 
-$stmt = $pdo->prepare(
-    "SELECT r.*, u.full_name
-     FROM tblReport r
-     JOIN tblUser u ON r.user_id = u.user_id
-     $where
-     ORDER BY r.generated_date DESC"
-);
-$stmt->execute($params);
-$reports = $stmt->fetchAll();
-
-$users = $pdo->query('SELECT user_id, full_name FROM tblUser ORDER BY full_name')->fetchAll();
+$filter  = new AdminReportFilter($_GET);
+$reports = $filter->getReports($pdo);
+$users   = $filter->getUsers($pdo);
+$filter_user = $filter->getFilterUser();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>

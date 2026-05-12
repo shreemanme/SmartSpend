@@ -1,9 +1,5 @@
 <?php
-/**
- * Page:      admin/dashboard.php
- * Component: Admin Panel — Dashboard
- * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
- */
+// admin/dashboard.php — Loads platform-wide stats via the AdminDashboardStats class.
 
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -13,10 +9,35 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_once __DIR__ . '/../config/db.php';
 
-$stat_users      = (int)$pdo->query('SELECT COUNT(*) FROM tblUser')->fetchColumn();
-$stat_expenses   = (int)$pdo->query('SELECT COUNT(*) FROM tblExpense WHERE is_deleted = 0')->fetchColumn();
-$stat_categories = (int)$pdo->query('SELECT COUNT(*) FROM tblCategory WHERE is_active = 1')->fetchColumn();
-$stat_audit      = (int)$pdo->query('SELECT COUNT(*) FROM tblAuditLog')->fetchColumn();
+// Runs four platform-wide count queries for the admin dashboard.
+class AdminDashboardStats
+{
+    public function getTotalUsers(\PDO $pdo): int
+    {
+        return (int)$pdo->query('SELECT COUNT(*) FROM tblUser')->fetchColumn();
+    }
+
+    public function getTotalExpenses(\PDO $pdo): int
+    {
+        return (int)$pdo->query('SELECT COUNT(*) FROM tblExpense WHERE is_deleted = 0')->fetchColumn();
+    }
+
+    public function getActiveCategories(\PDO $pdo): int
+    {
+        return (int)$pdo->query('SELECT COUNT(*) FROM tblCategory WHERE is_active = 1')->fetchColumn();
+    }
+
+    public function getTotalAuditEntries(\PDO $pdo): int
+    {
+        return (int)$pdo->query('SELECT COUNT(*) FROM tblAuditLog')->fetchColumn();
+    }
+}
+
+$stats           = new AdminDashboardStats();
+$stat_users      = $stats->getTotalUsers($pdo);
+$stat_expenses   = $stats->getTotalExpenses($pdo);
+$stat_categories = $stats->getActiveCategories($pdo);
+$stat_audit      = $stats->getTotalAuditEntries($pdo);
 
 require_once __DIR__ . '/../includes/header.php';
 ?>

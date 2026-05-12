@@ -1,9 +1,5 @@
 <?php
-/**
- * Page:      admin/users.php
- * Component: Admin Panel — User Management
- * Developer: Nandan Kumar Yadav (User & Account Management)
- */
+// admin/users.php — Lists and filters users via the AdminUserFilter class.
 
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -13,34 +9,61 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_once __DIR__ . '/../config/db.php';
 
-$search = trim($_GET['search'] ?? '');
-$filter_role = trim($_GET['role'] ?? '');
-$filter_status = trim($_GET['status'] ?? '');
+// Reads name/role/status filters and fetches matching user rows.
+class AdminUserFilter
+{
+    private string $search;
+    private string $filterRole;
+    private string $filterStatus;
 
-$where = [];
-$params = [];
+    public function __construct(array $get = [])
+    {
+        $this->search       = trim($get['search'] ?? '');
+        $this->filterRole   = trim($get['role']   ?? '');
+        $this->filterStatus = trim($get['status'] ?? '');
+    }
 
-if ($search !== '') {
-    $where[] = '(full_name LIKE ? OR email LIKE ?)';
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+    // Returns users matching the current search, role, and status filters.
+    public function getUsers(\PDO $pdo): array
+    {
+        $where  = [];
+        $params = [];
+
+        if ($this->search !== '') {
+            $where[]  = '(full_name LIKE ? OR email LIKE ?)';
+            $params[] = "%{$this->search}%";
+            $params[] = "%{$this->search}%";
+        }
+        if ($this->filterRole !== '') {
+            $where[]  = 'role = ?';
+            $params[] = $this->filterRole;
+        }
+        if ($this->filterStatus !== '') {
+            $where[]  = 'is_active = ?';
+            $params[] = $this->filterStatus === 'active' ? 1 : 0;
+        }
+
+        $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+        $stmt = $pdo->prepare("SELECT * FROM tblUser $whereClause ORDER BY created_date DESC");
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function getSearch(): string       { return $this->search; }
+    public function getFilterRole(): string   { return $this->filterRole; }
+    public function getFilterStatus(): string { return $this->filterStatus; }
+
+    public function hasActiveFilter(): bool
+    {
+        return $this->search !== '' || $this->filterRole !== '' || $this->filterStatus !== '';
+    }
 }
 
-if ($filter_role !== '') {
-    $where[] = 'role = ?';
-    $params[] = $filter_role;
-}
-
-if ($filter_status !== '') {
-    $where[] = 'is_active = ?';
-    $params[] = $filter_status === 'active' ? 1 : 0;
-}
-
-$whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
-
-$stmt = $pdo->prepare("SELECT * FROM tblUser $whereClause ORDER BY created_date DESC");
-$stmt->execute($params);
-$users = $stmt->fetchAll();
+$filter        = new AdminUserFilter($_GET);
+$users         = $filter->getUsers($pdo);
+$search        = $filter->getSearch();
+$filter_role   = $filter->getFilterRole();
+$filter_status = $filter->getFilterStatus();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -75,7 +98,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="form-group" style="flex: 0;">
         <button type="submit" class="btn-primary">Apply</button>
     </div>
-    <?php if ($search !== '' || $filter_role !== '' || $filter_status !== ''): ?>
+    <?php if ($filter->hasActiveFilter()): ?>
     <div class="form-group" style="flex: 0;">
         <a href="/smartspend/admin/users.php" class="btn-secondary" style="display:inline-block; padding:8px 12px; text-decoration:none;">Clear</a>
     </div>

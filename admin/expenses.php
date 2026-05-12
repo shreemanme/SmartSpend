@@ -1,9 +1,5 @@
 <?php
-/**
- * Page:      admin/expenses.php
- * Component: Admin Panel — Platform Expense Statistics (Anonymized)
- * Developer: Shreeman Bhandari (Scrum Master & Expense Management)
- */
+// admin/expenses.php — Anonymized platform expense stats via AdminExpenseStats.
 
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -13,41 +9,71 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_once __DIR__ . '/../config/db.php';
 
-// Filters
-$filter_category = isset($_GET['category_id']) && $_GET['category_id'] !== '' ? (int)$_GET['category_id'] : null;
-$filter_from     = trim($_GET['date_from']   ?? '');
-$filter_to       = trim($_GET['date_to']     ?? '');
+// Reads category/date filters and returns anonymized aggregate expense stats.
+class AdminExpenseStats
+{
+    private ?int   $filterCategory;
+    private string $filterFrom;
+    private string $filterTo;
 
-$where  = 'WHERE e.is_deleted = 0';
-$params = [];
+    public function __construct(array $get = [])
+    {
+        $this->filterCategory = isset($get['category_id']) && $get['category_id'] !== ''
+            ? (int)$get['category_id'] : null;
+        $this->filterFrom = trim($get['date_from'] ?? '');
+        $this->filterTo   = trim($get['date_to']   ?? '');
+    }
 
-if ($filter_category !== null) {
-    $where    .= ' AND e.category_id = ?';
-    $params[]  = $filter_category;
+    // Returns anonymized, aggregated expense rows grouped by date and category.
+    public function getStats(\PDO $pdo): array
+    {
+        $where  = 'WHERE e.is_deleted = 0';
+        $params = [];
+
+        if ($this->filterCategory !== null) {
+            $where   .= ' AND e.category_id = ?';
+            $params[] = $this->filterCategory;
+        }
+        if ($this->filterFrom !== '') {
+            $where   .= ' AND e.expense_date >= ?';
+            $params[] = $this->filterFrom;
+        }
+        if ($this->filterTo !== '') {
+            $where   .= ' AND e.expense_date <= ?';
+            $params[] = $this->filterTo;
+        }
+
+        $stmt = $pdo->prepare(
+            "SELECT e.expense_date, c.category_name,
+                    COUNT(e.expense_id) AS total_transactions,
+                    SUM(e.amount) AS total_amount
+             FROM tblExpense e
+             JOIN tblCategory c ON e.category_id = c.category_id
+             $where
+             GROUP BY e.expense_date, c.category_name
+             ORDER BY e.expense_date DESC, c.category_name ASC"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    // Returns all categories for the filter dropdown.
+    public function getCategories(\PDO $pdo): array
+    {
+        return $pdo->query('SELECT category_id, category_name FROM tblCategory ORDER BY category_name')->fetchAll();
+    }
+
+    public function getFilterCategory(): ?int   { return $this->filterCategory; }
+    public function getFilterFrom(): string     { return $this->filterFrom; }
+    public function getFilterTo(): string       { return $this->filterTo; }
 }
-if ($filter_from !== '') {
-    $where    .= ' AND e.expense_date >= ?';
-    $params[]  = $filter_from;
-}
-if ($filter_to !== '') {
-    $where    .= ' AND e.expense_date <= ?';
-    $params[]  = $filter_to;
-}
 
-// Anonymized Aggregate Query
-$stmt = $pdo->prepare(
-    "SELECT e.expense_date, c.category_name, COUNT(e.expense_id) as total_transactions, SUM(e.amount) as total_amount
-     FROM tblExpense e
-     JOIN tblCategory c ON e.category_id = c.category_id
-     $where
-     GROUP BY e.expense_date, c.category_name
-     ORDER BY e.expense_date DESC, c.category_name ASC"
-);
-$stmt->execute($params);
-$expenses = $stmt->fetchAll();
-
-// Dropdowns
-$categories = $pdo->query('SELECT category_id, category_name FROM tblCategory ORDER BY category_name')->fetchAll();
+$stats           = new AdminExpenseStats($_GET);
+$expenses        = $stats->getStats($pdo);
+$categories      = $stats->getCategories($pdo);
+$filter_category = $stats->getFilterCategory();
+$filter_from     = $stats->getFilterFrom();
+$filter_to       = $stats->getFilterTo();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>

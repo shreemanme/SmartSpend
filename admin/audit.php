@@ -1,9 +1,5 @@
 <?php
-/**
- * Page:      admin/audit.php
- * Component: Admin Panel — Audit Log Viewer (Anonymized)
- * Developer: Bibek Timsena (Audit & History Log)
- */
+// admin/audit.php — Anonymized audit log view via the AdminAuditFilter class.
 
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -13,36 +9,59 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_once __DIR__ . '/../config/db.php';
 
-// Filters
-$filter_action = trim($_GET['action_type'] ?? '');
-$filter_from   = trim($_GET['date_from']   ?? '');
-$filter_to     = trim($_GET['date_to']     ?? '');
+// Reads action/date filters and returns anonymized audit log rows.
+class AdminAuditFilter
+{
+    private string $filterAction;
+    private string $filterFrom;
+    private string $filterTo;
 
-$where  = 'WHERE 1=1';
-$params = [];
+    public function __construct(array $get = [])
+    {
+        $this->filterAction = trim($get['action_type'] ?? '');
+        $this->filterFrom   = trim($get['date_from']   ?? '');
+        $this->filterTo     = trim($get['date_to']     ?? '');
+    }
 
-if (in_array($filter_action, ['CREATE', 'UPDATE', 'DELETE'])) {
-    $where    .= ' AND a.action_type = ?';
-    $params[]  = $filter_action;
-}
-if ($filter_from !== '') {
-    $where    .= ' AND a.action_date >= ?';
-    $params[]  = $filter_from;
-}
-if ($filter_to !== '') {
-    $where    .= ' AND a.action_date <= ?';
-    $params[]  = $filter_to;
+    // Returns anonymized audit log rows (no user joins, no old_value).
+    public function getLogs(\PDO $pdo): array
+    {
+        $where  = 'WHERE 1=1';
+        $params = [];
+
+        if (in_array($this->filterAction, ['CREATE', 'UPDATE', 'DELETE'])) {
+            $where   .= ' AND a.action_type = ?';
+            $params[] = $this->filterAction;
+        }
+        if ($this->filterFrom !== '') {
+            $where   .= ' AND a.action_date >= ?';
+            $params[] = $this->filterFrom;
+        }
+        if ($this->filterTo !== '') {
+            $where   .= ' AND a.action_date <= ?';
+            $params[] = $this->filterTo;
+        }
+
+        $stmt = $pdo->prepare(
+            "SELECT a.log_id, a.expense_id, a.action_type, a.action_date, a.is_reviewed
+             FROM tblAuditLog a
+             $where
+             ORDER BY a.action_date DESC, a.log_id DESC"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function getFilterAction(): string { return $this->filterAction; }
+    public function getFilterFrom(): string   { return $this->filterFrom; }
+    public function getFilterTo(): string     { return $this->filterTo; }
 }
 
-// Anonymized query: No user joins, no old_value selected
-$stmt = $pdo->prepare(
-    "SELECT a.log_id, a.expense_id, a.action_type, a.action_date, a.is_reviewed
-     FROM tblAuditLog a
-     $where
-     ORDER BY a.action_date DESC, a.log_id DESC"
-);
-$stmt->execute($params);
-$logs = $stmt->fetchAll();
+$filter        = new AdminAuditFilter($_GET);
+$logs          = $filter->getLogs($pdo);
+$filter_action = $filter->getFilterAction();
+$filter_from   = $filter->getFilterFrom();
+$filter_to     = $filter->getFilterTo();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
