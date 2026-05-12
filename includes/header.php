@@ -50,20 +50,12 @@ function nav_active(string $path): string
 
             <ul class="navbar-links" id="nav-links" role="list">
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
-                        <li><a href="/smartspend/admin/dashboard.php" <?= nav_active('admin/dashboard') ?>>Admin Dashboard</a></li>
-                        <li><a href="/smartspend/admin/users.php" <?= nav_active('admin/users') ?>>Users</a></li>
-                        <li><a href="/smartspend/admin/categories.php" <?= nav_active('admin/categories') ?>>Categories</a></li>
-                        <li><a href="/smartspend/admin/expenses.php" <?= nav_active('admin/expenses') ?>>Expenses</a></li>
-                        <li><a href="/smartspend/admin/audit.php" <?= nav_active('admin/audit') ?>>Audit Log</a></li>
-                    <?php else: ?>
-                        <li><a href="/smartspend/dashboard/index.php" <?= nav_active('dashboard') ?>>Dashboard</a></li>
-                        <li><a href="/smartspend/expenses/index.php" <?= nav_active('expenses') ?>>Expenses</a></li>
-                        <li><a href="/smartspend/reports/index.php" <?= nav_active('reports') ?>>Reports</a></li>
-                        <li><a href="/smartspend/categories/index.php" <?= nav_active('categories') ?>>Categories</a></li>
-                        <li><a href="/smartspend/history/index.php" <?= nav_active('history') ?>>History</a></li>
-                        <li><a href="/smartspend/account/index.php" <?= nav_active('account') ?>>Account</a></li>
-                    <?php endif; ?>
+                    <li><a href="/smartspend/dashboard/index.php" <?= nav_active('dashboard') ?>>Dashboard</a></li>
+                    <li><a href="/smartspend/expenses/index.php" <?= nav_active('expenses') ?>>Expenses</a></li>
+                    <li><a href="/smartspend/reports/index.php" <?= nav_active('reports') ?>>Reports</a></li>
+                    <li><a href="/smartspend/categories/index.php" <?= nav_active('categories') ?>>Categories</a></li>
+                    <li><a href="/smartspend/history/index.php" <?= nav_active('history') ?>>History</a></li>
+                    <li><a href="/smartspend/account/index.php" <?= nav_active('account') ?>>Account</a></li>
                 <?php else: ?>
                     <li><a href="/smartspend/auth/login.php" <?= nav_active('login') ?>>Login</a></li>
                     <li><a href="/smartspend/auth/register.php" <?= nav_active('register') ?>>Register</a></li>
