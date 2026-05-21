@@ -181,7 +181,7 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Filter & Search Bar -->
 <form method="GET" action="" class="filter-bar" id="filter-form">
     <div class="form-group">
-        <label for="search">Find Expense</label>
+        <label for="search">Category Search</label>
         <input type="text" id="search" name="search"
                placeholder="Search category..."
                value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>"
