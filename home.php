@@ -24,7 +24,7 @@ if (isset($_SESSION['user_id'])) {
     <title>SmartSpend: Personal Expense Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/smartspend/assets/css/style.css">
     <link rel="stylesheet" href="/smartspend/assets/css/home.css">
 </head>
@@ -47,11 +47,6 @@ if (isset($_SESSION['user_id'])) {
 
     <!-- Hero Section -->
     <section class="hero" aria-labelledby="hero-heading">
-        <div class="hero-bg-shapes" aria-hidden="true">
-            <div class="hero-shape hero-shape-1"></div>
-            <div class="hero-shape hero-shape-2"></div>
-            <div class="hero-shape hero-shape-3"></div>
-        </div>
         <div class="hero-inner">
             <div class="hero-badge">
                 <span class="hero-badge-dot" aria-hidden="true"></span>
@@ -62,8 +57,7 @@ if (isset($_SESSION['user_id'])) {
                 <span class="hero-heading-accent">your spending</span>
             </h1>
             <p class="hero-subheading">
-                SmartSpend helps you log every expense, understand where your money goes,
-                and make smarter financial decisions. One clean dashboard.
+                SmartSpend helps you log every expense, understand where your money goes, and make smarter financial decisions. One clean, premium dashboard.
             </p>
             <div class="hero-actions">
                 <a href="/smartspend/auth/register.php" class="btn-hero-primary" id="hero-cta-register">
@@ -88,7 +82,7 @@ if (isset($_SESSION['user_id'])) {
                     <div class="preview-dot preview-dot-red"></div>
                     <div class="preview-dot preview-dot-yellow"></div>
                     <div class="preview-dot preview-dot-green"></div>
-                    <span class="preview-title">Dashboard, May 2026</span>
+                    <span class="preview-title">Dashboard Overview</span>
                 </div>
                 <div class="preview-stats">
                     <div class="preview-stat">
@@ -160,23 +154,23 @@ if (isset($_SESSION['user_id'])) {
     <section class="stats-strip" aria-label="Platform highlights">
         <div class="stats-strip-inner">
             <div class="strip-stat">
-                <strong>100%</strong>
-                <span>Free to use</span>
+                <strong>100% Free</strong>
+                <span>No subscriptions, no ads</span>
             </div>
             <div class="strip-divider" aria-hidden="true"></div>
             <div class="strip-stat">
-                <strong>5 categories</strong>
-                <span>Built-in expense types</span>
+                <strong>Custom Categories</strong>
+                <span>Tailored budget types</span>
             </div>
             <div class="strip-divider" aria-hidden="true"></div>
             <div class="strip-stat">
-                <strong>CSV export</strong>
-                <span>Download your reports</span>
+                <strong>CSV Reports</strong>
+                <span>One-click downloads</span>
             </div>
             <div class="strip-divider" aria-hidden="true"></div>
             <div class="strip-stat">
-                <strong>bcrypt</strong>
-                <span>Password security</span>
+                <strong>GDPR Ready</strong>
+                <span>Full personal data control</span>
             </div>
         </div>
     </section>
@@ -184,13 +178,12 @@ if (isset($_SESSION['user_id'])) {
     <!-- Features Section -->
     <section class="features" id="features" aria-labelledby="features-heading">
         <div class="features-inner">
-            <div class="section-label">What you get</div>
+            <div class="section-label">Features Overview</div>
             <h2 id="features-heading" class="section-heading">
                 Everything you need to track spending
             </h2>
             <p class="section-subheading">
-                Built without bloat. SmartSpend gives you exactly the tools you need,
-                nothing more, nothing less.
+                Simple, intuitive tools to track expenditures, analyze category habits, and maintain clear records with minimal effort.
             </p>
 
             <div class="features-grid">
@@ -203,7 +196,7 @@ if (isset($_SESSION['user_id'])) {
                         </svg>
                     </div>
                     <h3>Expense Tracking</h3>
-                    <p>Log expenses with a title, amount, category, and date. Edit or remove them any time. Soft-delete means nothing is ever lost.</p>
+                    <p>Log transactions with descriptions, amounts, categories, and dates. Includes validation safety and paginated historical lists.</p>
                 </div>
 
                 <div class="feature-card" id="feature-dashboard">
@@ -216,8 +209,8 @@ if (isset($_SESSION['user_id'])) {
                             <rect x="14" y="14" width="7" height="7" rx="1" />
                         </svg>
                     </div>
-                    <h3>Live Dashboard</h3>
-                    <p>See your month-to-date total, highest spending category, and recent transactions the moment you log in. No setup required.</p>
+                    <h3>Interactive Dashboard</h3>
+                    <p>Review real-time financial stats including total monthly expenditures, transaction count summaries, and top-spending category trends.</p>
                 </div>
 
                 <div class="feature-card" id="feature-reports">
@@ -231,20 +224,20 @@ if (isset($_SESSION['user_id'])) {
                             <polyline points="10,9 9,9 8,9" />
                         </svg>
                     </div>
-                    <h3>Reports &amp; CSV Export</h3>
-                    <p>Filter expenses by date range, see category totals, and export the whole lot to a CSV file for use in any spreadsheet app.</p>
+                    <h3>CSV Export &amp; Reporting</h3>
+                    <p>Generate detailed reports matching specific dates. Download a clean, formatted CSV document compatible with all spreadsheet software.</p>
                 </div>
 
-                <div class="feature-card" id="feature-account">
+                <div class="feature-card" id="feature-history">
                     <div class="feature-icon feature-icon-orange" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
                         </svg>
                     </div>
-                    <h3>Secure Accounts</h3>
-                    <p>Register in seconds. Passwords are hashed with bcrypt and all database queries use PDO prepared statements (security by default).</p>
+                    <h3>Personal History Audit</h3>
+                    <p>View a transparent history log tracking all changes. Entries preserve detailed before/after snapshots of records for clear self-accounting.</p>
                 </div>
 
                 <div class="feature-card" id="feature-categories">
@@ -255,20 +248,20 @@ if (isset($_SESSION['user_id'])) {
                             <line x1="7" y1="7" x2="7.01" y2="7" />
                         </svg>
                     </div>
-                    <h3>Smart Categories</h3>
-                    <p>Organise spending into clear categories (Food, Transport, Utilities, Entertainment, and more) so trends become obvious at a glance.</p>
+                    <h3>Flexible Categories</h3>
+                    <p>Customize spending categories to fit your lifestyle. Form validation prevents duplicate category titles and keeps records structured.</p>
                 </div>
 
-                <div class="feature-card" id="feature-admin">
+                <div class="feature-card" id="feature-security">
                     <div class="feature-icon feature-icon-red" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                         </svg>
                     </div>
-                    <h3>Admin Panel</h3>
-                    <p>Admins can manage users, oversee all categories, and review a full audit log of every create, update, and delete action in the system.</p>
+                    <h3>Secure &amp; GDPR Compliant</h3>
+                    <p>Hashed passwords using BCRYPT algorithms and PDO queries protect data. Download profile information in JSON or erase account files instantly.</p>
                 </div>
 
             </div>
@@ -280,30 +273,30 @@ if (isset($_SESSION['user_id'])) {
         <div class="how-inner">
             <div class="section-label section-label-white">How it works</div>
             <h2 id="how-heading" class="section-heading section-heading-white">
-                Up and running in three steps
+                Take control in three steps
             </h2>
             <div class="steps">
                 <div class="step" id="step-1">
                     <div class="step-number" aria-hidden="true">1</div>
                     <div class="step-content">
-                        <h3>Create your account</h3>
-                        <p>Register with your name, email, and a password. You're in straight away.</p>
+                        <h3>Create your profile</h3>
+                        <p>Sign up securely with your email and password in seconds. No setup required.</p>
                     </div>
                 </div>
                 <div class="step-connector" aria-hidden="true"></div>
                 <div class="step" id="step-2">
                     <div class="step-number" aria-hidden="true">2</div>
                     <div class="step-content">
-                        <h3>Log your expenses</h3>
-                        <p>Add expenses with a description, amount, category, and date. Takes five seconds per entry, less time than the receipt is in your pocket.</p>
+                        <h3>Log your transactions</h3>
+                        <p>Add expenditures with custom categories, dates, and amounts straight from your dashboard.</p>
                     </div>
                 </div>
                 <div class="step-connector" aria-hidden="true"></div>
                 <div class="step" id="step-3">
                     <div class="step-number" aria-hidden="true">3</div>
                     <div class="step-content">
-                        <h3>Understand your spending</h3>
-                        <p>Your dashboard updates instantly. Filter by date, download reports, and see exactly where every pound is going.</p>
+                        <h3>Analyze and export</h3>
+                        <p>Watch interactive statistics update instantly. Filter transactions and download CSV reports in one click.</p>
                     </div>
                 </div>
             </div>
@@ -318,7 +311,7 @@ if (isset($_SESSION['user_id'])) {
             </div>
             <h2 id="cta-heading" class="cta-heading">Ready to start tracking?</h2>
             <p class="cta-subheading">
-                Join SmartSpend for free today. No subscriptions, no ads, no nonsense.
+                Join SmartSpend for free today. Take control of your financial future.
             </p>
             <a href="/smartspend/auth/register.php" class="btn-cta" id="footer-cta-register">
                 Get started (it's free)
@@ -338,7 +331,7 @@ if (isset($_SESSION['user_id'])) {
                 <span>SmartSpend</span>
             </a>
             <p class="home-footer-copy">
-                &copy; <?= date('Y') ?> SmartSpend. CTEC2713 Agile Development Team Project.
+                &copy; <?= date('Y') ?> SmartSpend. Personal finance management system.
             </p>
             <nav class="home-footer-links" aria-label="Footer navigation">
                 <a href="/smartspend/auth/login.php">Login</a>

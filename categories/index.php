@@ -18,6 +18,7 @@ class CategoryFilter
     private int    $userId;
     private string $search;
     private string $status;   // 'active', 'inactive', or ''
+    private string $searchError = '';
 
     // Reads and sanitises filter values from the URL.
 
@@ -28,10 +29,25 @@ class CategoryFilter
         $this->status = trim($get['status'] ?? '');
     }
 
+    // Validates the search term; sets $searchError and returns false if invalid.
+    private function validate(): bool
+    {
+        if ($this->search === '') return true;
+
+        if (is_numeric($this->search)) {
+            $this->searchError = 'Numbers are not valid search terms for categories. Please enter a category name or description.';
+            return false;
+        }
+
+        return true;
+    }
+
     // Builds the WHERE clause from filters and returns matching category rows.
 
     public function getCategories(\PDO $pdo): array
     {
+        if (!$this->validate()) return [];
+
         $where  = ['user_id = ?'];
         $params = [$this->userId];
 
@@ -54,6 +70,7 @@ class CategoryFilter
     // Getters — allow the template to read private filter values.
     public function getSearch(): string { return $this->search; }
     public function getStatus(): string { return $this->status; }
+    public function getSearchError(): string { return $this->searchError; }
 
     // Returns true if any filter is set — used to show the Clear button
     public function hasActiveFilter(): bool
@@ -69,6 +86,7 @@ $categories = $filter->getCategories($pdo);
 // Unpack values for the HTML template (same variable names as before)
 $search        = $filter->getSearch();
 $filter_status = $filter->getStatus();
+$search_error  = $filter->getSearchError();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -79,10 +97,16 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <!-- Search and Filter Bar -->
-<form method="GET" action="" class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end;">
+<form method="GET" action="" class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-start;">
     <div class="form-group" style="flex: 1;">
         <label for="search">Find Category</label>
-        <input type="text" id="search" name="search" placeholder="Search name/desc..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>">
+        <input type="text" id="search" name="search"
+               placeholder="Search name/desc..."
+               value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>"
+               class="<?= $search_error ? 'input-error' : '' ?>">
+        <?php if ($search_error): ?>
+            <span class="form-error"><?= $search_error ?></span>
+        <?php endif; ?>
     </div>
     <div class="form-group">
         <label for="status">Filter by Status</label>
@@ -93,10 +117,12 @@ require_once __DIR__ . '/../includes/header.php';
         </select>
     </div>
     <div class="form-group" style="flex: 0;">
+        <label>&nbsp;</label>
         <button type="submit" class="btn-primary">Apply</button>
     </div>
     <?php if ($filter->hasActiveFilter()): ?>
     <div class="form-group" style="flex: 0;">
+        <label>&nbsp;</label>
         <a href="/smartspend/categories/index.php" class="btn-secondary" style="display:inline-block; padding:8px 12px; text-decoration:none;">Clear</a>
     </div>
     <?php endif; ?>

@@ -63,7 +63,7 @@ class ExpenseForm
         }
     }
 
-    // Inserts the validated expense and writes a CREATE audit log entry.
+    // Inserts the validated expense and writes a CREATE audit log entry with a snapshot.
     private function save(): void
     {
         $stmt = $this->pdo->prepare(
@@ -80,11 +80,23 @@ class ExpenseForm
 
         $expenseId = (int)$this->pdo->lastInsertId();
 
-        // Audit log — CREATE
+        // Resolve category name for the audit snapshot
+        $catStmt = $this->pdo->prepare('SELECT category_name FROM tblCategory WHERE category_id = ?');
+        $catStmt->execute([(int)$this->categoryId]);
+        $catName = (string)($catStmt->fetchColumn() ?: '');
+
+        // Audit log — CREATE (snapshot of the new expense)
+        $snapshot = json_encode([
+            'amount'        => $this->amount,
+            'category_id'   => $this->categoryId,
+            'category_name' => $catName,
+            'expense_date'  => $this->expenseDate,
+            'description'   => $this->description,
+        ]);
         $this->pdo->prepare(
             'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, is_reviewed)
-             VALUES (?, ?, \'CREATE\', CURDATE(), NULL, 0)'
-        )->execute([$this->userId, $expenseId]);
+             VALUES (?, ?, \'CREATE\', CURDATE(), ?, 0)'
+        )->execute([$this->userId, $expenseId, $snapshot]);
     }
 
     // Reads POST data, validates, saves if valid, and redirects on success.
