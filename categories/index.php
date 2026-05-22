@@ -167,6 +167,15 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?= (int)$cat['is_active'] === 1 ? 'Deactivate' : 'Activate' ?>
                             </button>
                         </form>
+
+                        <form method="POST" action="/smartspend/categories/delete.php"
+                              id="form-delete-cat-<?= $cat['category_id'] ?>"
+                              onsubmit="return confirm('Delete \'<?= addslashes(htmlspecialchars($cat['category_name'], ENT_QUOTES, 'UTF-8')) ?>\' permanently? This cannot be undone.');">
+                            <input type="hidden" name="category_id" value="<?= $cat['category_id'] ?>">
+                            <input type="hidden" name="action" value="delete">
+                            <button type="submit" class="btn-danger btn-sm"
+                                    id="btn-delete-cat-<?= $cat['category_id'] ?>">Delete</button>
+                        </form>
                     </div>
                 </td>
             </tr>
