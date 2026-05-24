@@ -34,8 +34,23 @@ class CategoryFilter
     {
         if ($this->search === '') return true;
 
+        if (strlen($this->search) < 2) {
+            $this->searchError = 'Search term must be at least 2 characters.';
+            return false;
+        }
+
         if (is_numeric($this->search)) {
-            $this->searchError = 'Numbers are not valid search terms for categories. Please enter a category name or description.';
+            $this->searchError = 'Numbers are not valid search terms. Please enter a category name or description.';
+            return false;
+        }
+
+        if (!preg_match('/[a-zA-Z]/', $this->search)) {
+            $this->searchError = 'Search term must contain at least one letter.';
+            return false;
+        }
+
+        if (preg_match('/[${}\[\]<>]/', $this->search)) {
+            $this->searchError = 'Search term cannot contain special characters such as $, {, }, <, or >.';
             return false;
         }
 
@@ -132,7 +147,6 @@ require_once __DIR__ . '/../includes/header.php';
     <table>
         <thead>
             <tr>
-                <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Status</th>
@@ -143,7 +157,6 @@ require_once __DIR__ . '/../includes/header.php';
         <tbody>
             <?php foreach ($categories as $cat): ?>
             <tr>
-                <td><?= $cat['category_id'] ?></td>
                 <td><?= htmlspecialchars($cat['category_name'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars($cat['description'] ?? '—', ENT_QUOTES, 'UTF-8') ?></td>
                 <td>

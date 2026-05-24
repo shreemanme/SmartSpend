@@ -88,6 +88,15 @@ class ExpenseEditForm
         } elseif ($this->expenseDate > date('Y-m-d')) {
             $this->fieldErrors['expense_date'] = 'Expense date cannot be in the future.';
         }
+        if ($this->description === '') {
+            $this->fieldErrors['description'] = 'Please enter a description.';
+        } elseif (strlen($this->description) < 2) {
+            $this->fieldErrors['description'] = 'Description must be at least 2 characters.';
+        } elseif (is_numeric($this->description)) {
+            $this->fieldErrors['description'] = 'Description cannot be a number. Please enter a meaningful description.';
+        } elseif (preg_match('/[${}\[\]<>@#!%^*()+= |\\\\~`;:"?]/', $this->description)) {
+            $this->fieldErrors['description'] = 'Description contains invalid characters. Only letters, spaces, hyphens, apostrophes, and basic punctuation are allowed.';
+        }
     }
 
     // Saves the validated changes and writes an UPDATE audit log entry with old and new values.
@@ -128,11 +137,11 @@ class ExpenseEditForm
             'description'   => $this->description,
         ]);
 
-        // Audit log — UPDATE (stores old values)
+        // Audit log — UPDATE (stores old and new values for before→after display)
         $this->pdo->prepare(
-            'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, is_reviewed)
-             VALUES (?, ?, \'UPDATE\', CURDATE(), ?, 0)'
-        )->execute([$this->userId, $this->expenseId, $old]);
+            'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, new_value, is_reviewed)
+             VALUES (?, ?, \'UPDATE\', CURDATE(), ?, ?, 0)'
+        )->execute([$this->userId, $this->expenseId, $old, $new]);
     }
 
     // Reads POST data, validates, updates the record if valid, then redirects.
@@ -227,10 +236,13 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="form-group">
-            <label for="description">Description <span class="text-muted">(optional)</span></label>
+            <label for="description">Description</label>
             <input type="text" id="description" name="description"
                    value="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>"
-                   maxlength="255">
+                   maxlength="255" minlength="2" required>
+            <?php if (isset($field_errors['description'])): ?>
+                <span class="form-error"><?= htmlspecialchars($field_errors['description'], ENT_QUOTES, 'UTF-8') ?></span>
+            <?php endif; ?>
         </div>
 
         <div class="form-actions">
