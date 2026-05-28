@@ -128,11 +128,11 @@ class ExpenseEditForm
             'description'   => $this->description,
         ]);
 
-        // Audit log — UPDATE (stores both old and new values)
+        // Audit log — UPDATE (stores old values)
         $this->pdo->prepare(
-            'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, new_value, is_reviewed)
-             VALUES (?, ?, \'UPDATE\', CURDATE(), ?, ?, 0)'
-        )->execute([$this->userId, $this->expenseId, $old, $new]);
+            'INSERT INTO tblAuditLog (user_id, expense_id, action_type, action_date, old_value, is_reviewed)
+             VALUES (?, ?, \'UPDATE\', CURDATE(), ?, 0)'
+        )->execute([$this->userId, $this->expenseId, $old]);
     }
 
     // Reads POST data, validates, updates the record if valid, then redirects.
