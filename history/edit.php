@@ -2,7 +2,7 @@
 /**
  * Page:      history/edit.php
  * Component: Audit Log — Edit (Acknowledge)
- * Developer: Bibek Timsena (Audit & History Log)
+ * Developer: Bibek Timsina (Audit & History Log)
  */
 
 session_start();

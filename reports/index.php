@@ -1,5 +1,5 @@
 <?php
-// reports/index.php — Loads and filters reports via ReportLoader and ReportFilter.
+// reports/index.php — Developer: Suraj Rai (Reporting & Analytics)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

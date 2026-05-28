@@ -1,5 +1,5 @@
 <?php
-// expenses/delete.php — Soft-deletes an expense via the ExpenseDeleter class.
+// expenses/delete.php — Developer: Shreeman Bhandari (Expense Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

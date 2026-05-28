@@ -2,7 +2,7 @@
 /**
  * Page:      history/delete.php
  * Component: Audit Log — Delete
- * Developer: Bibek Timsena (Audit & History Log)
+ * Developer: Bibek Timsina (Audit & History Log)
  */
 
 session_start();

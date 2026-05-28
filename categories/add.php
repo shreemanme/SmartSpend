@@ -1,5 +1,5 @@
 <?php
-// categories/add.php — Handles add-category form via the CategoryAddForm class.
+// categories/add.php — Developer: Ratnesh Kumar Yadav (Category Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

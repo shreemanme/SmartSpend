@@ -2,7 +2,7 @@
 /**
  * Page:      history/add.php
  * Component: Audit Log — Attach / Edit a note on a specific log entry
- * Developer: Bibek Timsena (Audit & History Log)
+ * Developer: Bibek Timsina (Audit & History Log)
  */
 
 session_start();

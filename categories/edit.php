@@ -1,5 +1,5 @@
 <?php
-// categories/edit.php — Handles edit-category form via the CategoryEditForm class.
+// categories/edit.php — Developer: Ratnesh Kumar Yadav (Category Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

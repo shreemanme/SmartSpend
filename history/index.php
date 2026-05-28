@@ -1,5 +1,5 @@
 <?php
-// history/index.php — Lists and filters audit log entries via the AuditFilter class.
+// history/index.php — Developer: Bibek Timsina (Audit & History Log)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

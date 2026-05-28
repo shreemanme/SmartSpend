@@ -1,5 +1,5 @@
 <?php
-// categories/delete.php — Toggles active state or permanently deletes a category.
+// categories/delete.php — Developer: Ratnesh Kumar Yadav (Category Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

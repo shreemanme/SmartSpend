@@ -1,5 +1,5 @@
 <?php
-// categories/index.php — Lists and filters categories via the CategoryFilter class.
+// categories/index.php — Developer: Ratnesh Kumar Yadav (Category Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

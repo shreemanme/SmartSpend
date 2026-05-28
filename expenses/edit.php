@@ -1,5 +1,5 @@
 <?php
-// expenses/edit.php — Handles edit-expense form via the ExpenseEditForm class.
+// expenses/edit.php — Developer: Shreeman Bhandari (Expense Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

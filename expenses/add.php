@@ -1,5 +1,5 @@
 <?php
-// expenses/add.php — Handles add-expense form via the ExpenseForm class.
+// expenses/add.php — Developer: Shreeman Bhandari (Expense Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {

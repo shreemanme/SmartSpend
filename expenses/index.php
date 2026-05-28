@@ -1,5 +1,5 @@
 <?php
-// expenses/index.php — Lists and filters expenses via the ExpenseFilter class.
+// expenses/index.php — Developer: Shreeman Bhandari (Expense Management)
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
