@@ -43,8 +43,24 @@ class ExpenseFilter
     {
         if ($this->search === '') return true;
 
+        if (strlen($this->search) < 2) {
+            $this->searchError = 'Search term must be at least 2 characters.';
+            return false;
+        }
+
         if (is_numeric($this->search)) {
-            $this->searchError = 'Numbers are not valid search terms for expenses. Please enter a category name.';
+            $this->searchError = 'Numbers are not valid search terms. Please enter a description keyword.';
+            return false;
+        }
+
+        if (!preg_match('/[a-zA-Z]/', $this->search)) {
+            $this->searchError = 'Search term must contain at least one letter.';
+            return false;
+        }
+
+        // Reject programming variables, SQL/HTML special characters, and symbols.
+        if (preg_match('/[\${}\[\]<>@#!%^*()+=|\\\\\/~`;:"?]/', $this->search)) {
+            $this->searchError = 'Search term contains invalid characters. Only letters, spaces, hyphens, and apostrophes are allowed.';
             return false;
         }
 
@@ -71,7 +87,7 @@ class ExpenseFilter
             $params[] = $this->dateTo;
         }
         if ($this->search !== '') {
-            $where   .= ' AND c.category_name LIKE ?';
+            $where   .= ' AND e.description LIKE ?';
             $params[] = "%{$this->search}%";
         }
 
@@ -181,14 +197,13 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Filter & Search Bar -->
 <form method="GET" action="" class="filter-bar" id="filter-form">
     <div class="form-group">
-        <label for="search">Category Search</label>
+        <label for="search">Search Description</label>
         <input type="text" id="search" name="search"
-               placeholder="Search category..."
+               placeholder="e.g. lunch, train ticket..."
                value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>"
-               class="<?= $search_error ? 'input-error' : '' ?>">
-        <?php if ($search_error): ?>
-            <span class="form-error"><?= $search_error ?></span>
-        <?php endif; ?>
+               class="<?= $search_error ? 'input-error' : '' ?>"
+               autocomplete="off">
+        <span class="form-error" id="search-inline-error"><?= $search_error ?></span>
     </div>
     <div class="form-group">
         <label for="filter-category">Category</label>
@@ -222,9 +237,44 @@ require_once __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 </form>
 
+<script>
+(function () {
+    const input  = document.getElementById('search');
+    const errEl  = document.getElementById('search-inline-error');
+    const INVALID = /[${}[\]<>@#!%^*()+= |\\\/~`;:"?]/;
+
+    function validate(val) {
+        if (val === '') return '';
+        if (val.length < 2)            return 'Search term must be at least 2 characters.';
+        if (/^\d+(\.\d+)?$/.test(val)) return 'Numbers are not valid search terms. Please enter a description keyword.';
+        if (!/[a-zA-Z]/.test(val))     return 'Search term must contain at least one letter.';
+        if (INVALID.test(val))         return 'Search term contains invalid characters. Only letters, spaces, hyphens, and apostrophes are allowed.';
+        return '';
+    }
+
+    input.addEventListener('input', function () {
+        const msg = validate(this.value.trim());
+        errEl.textContent = msg;
+        this.classList.toggle('input-error', msg !== '');
+    });
+
+    // Block submit if client-side error exists
+    input.closest('form').addEventListener('submit', function (e) {
+        const msg = validate(input.value.trim());
+        if (msg) {
+            e.preventDefault();
+            errEl.textContent = msg;
+            input.classList.add('input-error');
+            input.focus();
+        }
+    });
+})();
+</script>
+
+
 <!-- Expense Table -->
 <?php if (empty($expenses)): ?>
-    <p class="text-muted">No expenses found. <a href="/smartspend/expenses/add.php">Add your first one.</a></p>
+    <p class="text-muted">No expenses found.</p>
 <?php else: ?>
 <div class="table-wrapper">
     <table>

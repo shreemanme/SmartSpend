@@ -15,25 +15,11 @@ class AuditFilter
 {
 
     private int    $userId;
-    private string $search;
+    private string $search;        // free-text search against old_value / new_value
     private string $filterAction;  // 'CREATE', 'UPDATE', 'DELETE', 'MANUAL', or ''
     private string $searchError = '';
 
-    // Maps user-facing labels (any case) to the raw DB action_type values.
-    private const LABEL_MAP = [
-        'created'    => 'CREATE',
-        'create'     => 'CREATE',
-        'updated'    => 'UPDATE',
-        'update'     => 'UPDATE',
-        'deleted'    => 'DELETE',
-        'delete'     => 'DELETE',
-        'note added' => 'MANUAL',
-        'note'       => 'MANUAL',
-        'manual'     => 'MANUAL',
-    ];
-
     // Reads and stores the search and action filter values from $_GET.
-
     public function __construct(int $userId, array $get = [])
     {
         $this->userId       = $userId;
@@ -41,25 +27,28 @@ class AuditFilter
         $this->filterAction = trim($get['action'] ?? '');
     }
 
-    // Translates a user-typed label to its DB value; returns null if unrecognised.
-    private function resolveSearch(): ?string
-    {
-        if ($this->search === '') return null;
-        return self::LABEL_MAP[strtolower($this->search)] ?? null;
-    }
-
     // Validates the search term; sets $searchError and returns false if invalid.
     private function validate(): bool
     {
         if ($this->search === '') return true;
 
-        if (is_numeric($this->search)) {
-            $this->searchError = 'Numbers are not valid search terms. Please enter an action name such as “Created”, “Updated”, “Deleted”, or “Note Added”.';
+        if (strlen($this->search) < 2) {
+            $this->searchError = 'Search term must be at least 2 characters.';
             return false;
         }
 
-        if ($this->resolveSearch() === null) {
-            $this->searchError = '“' . htmlspecialchars($this->search, ENT_QUOTES, 'UTF-8') . '” is not a recognised action. Valid options are: Created, Updated, Deleted, Note Added.';
+        if (is_numeric($this->search)) {
+            $this->searchError = 'Numbers are not valid search terms. Please enter a keyword from the expense details.';
+            return false;
+        }
+
+        if (!preg_match('/[a-zA-Z]/', $this->search)) {
+            $this->searchError = 'Search term must contain at least one letter.';
+            return false;
+        }
+
+        if (preg_match('/[${}\[\]<>]/', $this->search)) {
+            $this->searchError = 'Search term cannot contain special characters such as $, {, }, <, or >.';
             return false;
         }
 
@@ -74,16 +63,14 @@ class AuditFilter
         $where  = ['user_id = ?'];
         $params = [$this->userId];
 
+        // Free-text search across the stored detail columns.
         if ($this->search !== '') {
-            $resolved = $this->resolveSearch();
-            if ($resolved !== null) {
-                $where[]  = 'action_type = ?';
-                $params[] = $resolved;
-            } else {
-                $where[]  = 'action_type LIKE ?';
-                $params[] = "%{$this->search}%";
-            }
+            $where[]  = '(old_value LIKE ? OR new_value LIKE ?)';
+            $params[] = "%{$this->search}%";
+            $params[] = "%{$this->search}%";
         }
+
+        // Dropdown filter restricts to a specific action type.
         if ($this->filterAction !== '') {
             $where[]  = 'action_type = ?';
             $params[] = $this->filterAction;
@@ -135,9 +122,9 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Search and Filter Bar -->
 <form method="GET" action="" class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-start;">
     <div class="form-group" style="flex: 1;">
-        <label for="search">Find (Action)</label>
+        <label for="search">Search Details</label>
         <input type="text" id="search" name="search"
-               placeholder="e.g. Created, Updated, Deleted"
+               placeholder="e.g. Food, £12.50, Groceries..."
                value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>"
                class="<?= $search_error ? 'input-error' : '' ?>">
         <?php if ($search_error): ?>

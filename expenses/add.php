@@ -61,6 +61,15 @@ class ExpenseForm
         } elseif ($this->expenseDate > date('Y-m-d')) {
             $this->fieldErrors['expense_date'] = 'Expense date cannot be in the future.';
         }
+        if ($this->description === '') {
+            $this->fieldErrors['description'] = 'Please enter a description.';
+        } elseif (strlen($this->description) < 2) {
+            $this->fieldErrors['description'] = 'Description must be at least 2 characters.';
+        } elseif (is_numeric($this->description)) {
+            $this->fieldErrors['description'] = 'Description cannot be a number. Please enter a meaningful description.';
+        } elseif (preg_match('/[${}\[\]<>@#!%^*()+= |\\\\~`;:"?]/', $this->description)) {
+            $this->fieldErrors['description'] = 'Description contains invalid characters. Only letters, spaces, hyphens, apostrophes, and basic punctuation are allowed.';
+        }
     }
 
     // Inserts the validated expense and writes a CREATE audit log entry with a snapshot.
@@ -153,48 +162,55 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="form-card">
     <form method="POST" action="" novalidate>
 
-        <div class="form-group">
-            <label for="amount">Amount (£)</label>
-            <input type="number" id="amount" name="amount"
-                   value="<?= htmlspecialchars($amount, ENT_QUOTES, 'UTF-8') ?>"
-                   step="0.01" min="0.01" placeholder="0.00" required>
-            <?php if (isset($field_errors['amount'])): ?>
-                <span class="form-error"><?= htmlspecialchars($field_errors['amount'], ENT_QUOTES, 'UTF-8') ?></span>
-            <?php endif; ?>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="amount">Amount (£)</label>
+                <input type="number" id="amount" name="amount"
+                       value="<?= htmlspecialchars($amount, ENT_QUOTES, 'UTF-8') ?>"
+                       step="0.01" min="0.01" placeholder="0.00" required>
+                <?php if (isset($field_errors['amount'])): ?>
+                    <span class="form-error"><?= htmlspecialchars($field_errors['amount'], ENT_QUOTES, 'UTF-8') ?></span>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" required>
+                    <option value="">— Select category —</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?= $cat['category_id'] ?>"
+                            <?= ((string)$category_id === (string)$cat['category_id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($cat['category_name'], ENT_QUOTES, 'UTF-8') ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if (isset($field_errors['category_id'])): ?>
+                    <span class="form-error"><?= htmlspecialchars($field_errors['category_id'], ENT_QUOTES, 'UTF-8') ?></span>
+                <?php endif; ?>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="category_id">Category</label>
-            <select id="category_id" name="category_id" required>
-                <option value="">— Select category —</option>
-                <?php foreach ($categories as $cat): ?>
-                    <option value="<?= $cat['category_id'] ?>"
-                        <?= ((string)$category_id === (string)$cat['category_id']) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($cat['category_name'], ENT_QUOTES, 'UTF-8') ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <?php if (isset($field_errors['category_id'])): ?>
-                <span class="form-error"><?= htmlspecialchars($field_errors['category_id'], ENT_QUOTES, 'UTF-8') ?></span>
-            <?php endif; ?>
-        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="expense_date">Date</label>
+                <input type="date" id="expense_date" name="expense_date"
+                       class="expense-date-input"
+                       value="<?= htmlspecialchars($expense_date, ENT_QUOTES, 'UTF-8') ?>"
+                       max="<?= date('Y-m-d') ?>" required>
+                <?php if (isset($field_errors['expense_date'])): ?>
+                    <span class="form-error"><?= htmlspecialchars($field_errors['expense_date'], ENT_QUOTES, 'UTF-8') ?></span>
+                <?php endif; ?>
+            </div>
 
-        <div class="form-group">
-            <label for="expense_date">Date</label>
-            <input type="date" id="expense_date" name="expense_date"
-                   class="expense-date-input"
-                   value="<?= htmlspecialchars($expense_date, ENT_QUOTES, 'UTF-8') ?>"
-                   max="<?= date('Y-m-d') ?>" required>
-            <?php if (isset($field_errors['expense_date'])): ?>
-                <span class="form-error"><?= htmlspecialchars($field_errors['expense_date'], ENT_QUOTES, 'UTF-8') ?></span>
-            <?php endif; ?>
-        </div>
-
-        <div class="form-group">
-            <label for="description">Description <span class="text-muted">(optional)</span></label>
-            <input type="text" id="description" name="description"
-                   value="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>"
-                   maxlength="255" placeholder="e.g. Lunch at Costa">
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" id="description" name="description"
+                       value="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>"
+                       maxlength="255" minlength="2" placeholder="e.g. Lunch at Costa" required>
+                <?php if (isset($field_errors['description'])): ?>
+                    <span class="form-error"><?= htmlspecialchars($field_errors['description'], ENT_QUOTES, 'UTF-8') ?></span>
+                <?php endif; ?>
+            </div>
         </div>
 
         <div class="form-actions">
