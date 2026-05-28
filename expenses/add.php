@@ -67,7 +67,7 @@ class ExpenseForm
             $this->fieldErrors['description'] = 'Description must be at least 2 characters.';
         } elseif (is_numeric($this->description)) {
             $this->fieldErrors['description'] = 'Description cannot be a number. Please enter a meaningful description.';
-        } elseif (preg_match('/[${}\[\]<>@#!%^*()+= |\\\\~`;:"?]/', $this->description)) {
+        } elseif (!preg_match('/^[a-zA-Z0-9 \-\'.,\/&]+$/', $this->description)) {
             $this->fieldErrors['description'] = 'Description contains invalid characters. Only letters, spaces, hyphens, apostrophes, and basic punctuation are allowed.';
         }
     }
