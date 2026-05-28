@@ -11,11 +11,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /smartspend/account/index.php');
+    header('Location: /smartspend/auth/account/index.php');
     exit;
 }
 
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../../config/db.php';
 
 $uid       = (int)$_SESSION['user_id'];
 $full_name = trim($_POST['full_name'] ?? '');
@@ -23,13 +23,13 @@ $email     = trim($_POST['email']     ?? '');
 
 if (empty($full_name)) {
     $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Full name cannot be empty.'];
-    header('Location: /smartspend/account/index.php');
+    header('Location: /smartspend/auth/account/index.php');
     exit;
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Please enter a valid email address.'];
-    header('Location: /smartspend/account/index.php');
+    header('Location: /smartspend/auth/account/index.php');
     exit;
 }
 
@@ -38,7 +38,7 @@ $stmt = $pdo->prepare('SELECT COUNT(*) FROM tblUser WHERE email = ? AND user_id 
 $stmt->execute([$email, $uid]);
 if ((int)$stmt->fetchColumn() > 0) {
     $_SESSION['flash'] = ['type' => 'error', 'msg' => 'That email address is already in use.'];
-    header('Location: /smartspend/account/index.php');
+    header('Location: /smartspend/auth/account/index.php');
     exit;
 }
 
@@ -48,5 +48,5 @@ $pdo->prepare('UPDATE tblUser SET full_name = ?, email = ? WHERE user_id = ?')
 $_SESSION['full_name'] = $full_name;
 
 $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Account details updated.'];
-header('Location: /smartspend/account/index.php');
+header('Location: /smartspend/auth/account/index.php');
 exit;

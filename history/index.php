@@ -15,7 +15,7 @@ class AuditFilter
 {
 
     private int    $userId;
-    private string $search;        // free-text search against old_value / new_value
+    private string $search;        // free-text search against old_value
     private string $filterAction;  // 'CREATE', 'UPDATE', 'DELETE', 'MANUAL', or ''
     private string $searchError = '';
 
@@ -65,8 +65,7 @@ class AuditFilter
 
         // Free-text search across the stored detail columns.
         if ($this->search !== '') {
-            $where[]  = '(old_value LIKE ? OR new_value LIKE ?)';
-            $params[] = "%{$this->search}%";
+            $where[]  = 'old_value LIKE ?';
             $params[] = "%{$this->search}%";
         }
 

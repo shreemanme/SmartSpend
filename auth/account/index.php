@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../../config/db.php';
 $uid = (int)$_SESSION['user_id'];
 
 $stmt = $pdo->prepare('SELECT full_name, email, created_date, role FROM tblUser WHERE user_id = ?');
@@ -25,8 +25,9 @@ if (!$user) {
     exit;
 }
 
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../../includes/header.php';
 ?>
+
 
 <div class="page-header">
     <h1>My Account</h1>
@@ -59,7 +60,7 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Update details -->
 <div class="form-card">
     <h2>Update Details</h2>
-    <form method="POST" action="/smartspend/account/update.php" novalidate>
+    <form method="POST" action="/smartspend/auth/account/update.php" novalidate>
         <div class="form-group">
             <label for="full_name">Full name</label>
             <input type="text" id="full_name" name="full_name"
@@ -79,7 +80,7 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Change password -->
 <div class="form-card">
     <h2>Change Password</h2>
-    <form method="POST" action="/smartspend/account/password.php" novalidate>
+    <form method="POST" action="/smartspend/auth/account/password.php" novalidate>
         <div class="form-group">
             <label for="current_password">Current password</label>
             <input type="password" id="current_password" name="current_password"
@@ -107,7 +108,7 @@ require_once __DIR__ . '/../includes/header.php';
     <h2>Download My Data</h2>
     <p>Get a copy of your personal data, including your account details, expenses, and reports in JSON format.</p>
     <div class="form-actions" style="margin-top:15px;">
-        <a href="/smartspend/account/export_data.php" class="btn-primary" style="display:inline-block;">Download Data</a>
+        <a href="/smartspend/auth/account/export_data.php" class="btn-primary" style="display:inline-block;">Download Data</a>
     </div>
 </div>
 
@@ -115,9 +116,9 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="danger-zone">
     <h3>Delete Account</h3>
     <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
-    <form method="POST" action="/smartspend/account/delete.php" id="form-delete-account">
+    <form method="POST" action="/smartspend/auth/account/delete.php" id="form-delete-account">
         <button type="submit" id="btn-delete-account" class="btn-danger" onclick="return confirm('Are you sure you want to permanently delete your account and all data? This cannot be undone.')">Delete My Account</button>
     </form>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

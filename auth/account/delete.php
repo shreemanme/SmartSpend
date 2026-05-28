@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../../config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uid = (int)$_SESSION['user_id'];
@@ -52,10 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'type' => 'error',
             'msg'  => 'An error occurred while deleting your account. Please try again.'
         ];
-        header('Location: /smartspend/account/index.php');
+        header('Location: /smartspend/auth/account/index.php');
         exit;
     }
 } else {
-    header('Location: /smartspend/account/index.php');
+    header('Location: /smartspend/auth/account/index.php');
     exit;
 }
