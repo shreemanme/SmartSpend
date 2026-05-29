@@ -219,11 +219,11 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
     <div class="form-group">
         <label for="filter-from">From</label>
-        <input type="date" id="filter-from" name="date_from" value="<?= htmlspecialchars($filter_from, ENT_QUOTES, 'UTF-8') ?>">
+        <input type="date" id="filter-from" name="date_from" value="<?= htmlspecialchars($filter_from, ENT_QUOTES, 'UTF-8') ?>" max="<?= date('Y-m-d') ?>">
     </div>
     <div class="form-group">
         <label for="filter-to">To</label>
-        <input type="date" id="filter-to" name="date_to" value="<?= htmlspecialchars($filter_to, ENT_QUOTES, 'UTF-8') ?>">
+        <input type="date" id="filter-to" name="date_to" value="<?= htmlspecialchars($filter_to, ENT_QUOTES, 'UTF-8') ?>" max="<?= date('Y-m-d') ?>">
     </div>
     <div class="form-group" style="flex:0;">
         <label>&nbsp;</label>
