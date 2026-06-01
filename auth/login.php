@@ -19,8 +19,9 @@ $errors = [];
 $email  = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email    = trim($_POST['email']    ?? '');
-    $password = trim($_POST['password'] ?? '');
+    $email      = trim($_POST['email']      ?? '');
+    $password   = trim($_POST['password']   ?? '');
+    $login_role = trim($_POST['login_role'] ?? 'user');
 
     if (empty($email) || empty($password)) {
         $errors[] = 'Please fill in all fields.';
@@ -35,6 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'This account has been deactivated.';
         } elseif (!password_verify($password, $user['password_hash'])) {
             $errors[] = 'Invalid email or password.';
+        } elseif ($login_role === 'admin' && $user['role'] !== 'admin') {
+            $errors[] = 'Invalid email or password.';
         } else {
             $_SESSION['user_id']   = $user['user_id'];
             $_SESSION['full_name'] = $user['full_name'];
@@ -48,8 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['flash'] = ['type' => 'success', 'msg' => "Welcome back, {$first_name}!"];
             }
 
-            // Redirect to dashboard
-            header('Location: /smartspend/dashboard/index.php');
+            // Redirect based on role
+            if ($user['role'] === 'admin') {
+                header('Location: /smartspend/admin/index.php');
+            } else {
+                header('Location: /smartspend/dashboard/index.php');
+            }
             exit;
         }
     }
@@ -73,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span>SmartSpend</span>
         </div>
 
-        <h2>Login to SmartSpend</h2>
+        <h2 id="form-title">Login to SmartSpend</h2>
 
         <?php if (isset($_SESSION['flash'])): ?>
             <?php
@@ -92,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" action="" novalidate>
+            <input type="hidden" name="login_role" id="login-role" value="user">
             <div class="form-group">
                 <label for="email">Email address</label>
                 <input
@@ -118,6 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>
 
+        <button type="button" id="btn-toggle-admin" class="btn-secondary" style="width:100%; margin-top: 12px; margin-bottom: 8px;">Login as Admin</button>
+
         <p class="auth-link">
             Don't have an account? <a href="/smartspend/auth/register.php">Register</a>
         </p>
@@ -125,5 +135,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script src="/smartspend/assets/js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnToggleAdmin = document.getElementById('btn-toggle-admin');
+    const loginRole = document.getElementById('login-role');
+    const formTitle = document.getElementById('form-title');
+    const registerLink = document.querySelector('.auth-link');
+    
+    if (btnToggleAdmin) {
+        btnToggleAdmin.addEventListener('click', function() {
+            if (loginRole.value === 'user') {
+                loginRole.value = 'admin';
+                formTitle.textContent = 'Admin Login';
+                btnToggleAdmin.textContent = 'Login as Standard User';
+                if (registerLink) registerLink.style.display = 'none';
+            } else {
+                loginRole.value = 'user';
+                formTitle.textContent = 'Login to SmartSpend';
+                btnToggleAdmin.textContent = 'Login as Admin';
+                if (registerLink) registerLink.style.display = 'block';
+            }
+        });
+    }
+});
+</script>
 </body>
 </html>

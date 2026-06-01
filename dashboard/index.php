@@ -7,6 +7,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+if (($_SESSION['role'] ?? '') === 'admin') {
+    header('Location: /smartspend/admin/index.php');
+    exit;
+}
+
 require_once __DIR__ . '/../config/db.php';
 
 $uid = (int)$_SESSION['user_id'];
